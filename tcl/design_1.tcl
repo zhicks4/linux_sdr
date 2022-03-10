@@ -223,7 +223,7 @@ proc create_root_design { parentCell } {
    CONFIG.Latency {8} \
    CONFIG.M_DATA_Has_TUSER {Not_Required} \
    CONFIG.Noise_Shaping {Auto} \
-   CONFIG.Output_Frequency1 {0.002} \
+   CONFIG.Output_Frequency1 {0.007} \
    CONFIG.Output_Width {15} \
    CONFIG.PINC1 {10000110001101} \
    CONFIG.Phase_Width {29} \
