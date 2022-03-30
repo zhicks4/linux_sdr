@@ -1,0 +1,10 @@
+
+
+OPTION psf_version = 2.1;
+
+BEGIN DRIVER doug_custom
+	OPTION supported_peripherals = (doug_custom);
+	OPTION copyfiles = all;
+	OPTION VERSION = 1.0;
+	OPTION NAME = doug_custom;
+END DRIVER
