@@ -11,3 +11,10 @@ version controlled SRC directory.  So, if you change it, you have to copy it bac
 done it yet
 
 The base distributed project for the radio peripheral laboratory
+
+A couple of other notes to smooth things along :
+
+- Note that the Makefile that is created for you with the Create/Import peripheral wizard doesn't work when you go to build your software Vitis if you are using Windows.  Before packaging your peripheral, make sure to copy the Makefile from the doug_custom peripheral in this repository in place of the Makefile that the tool created as part of your software driver
+- I'm not convinced that right clicking on the "Update Hardware Platform" works when you've changed the underlying hardware XSA file.  The safest thing to do here (this is where the script really helps) is to just delete the entire Vitis directory and regenerate it.  To regenerate a Vitis directory (workspace with all the software), you can certainly do it manually as in all the other labs; however I just run the last line of "make_project.bat" from the command prompt
+- Make sure to use a standard command prompt, and not the windows powershell.
+- If you are experiencing long build times (i.e. waiting for an excessive amount of time for impl_1 to complete) this may be that you don't have enough memory to handle the level of parallelism that I asked for in the script.  Edit "impl.tcl" to change the line from "-jobs 7" to "-jobs 3" if you don't have 16GB of memory.  Your computer probably doesn't have enough memory to synthesize 7 things in parallel, and is constantly swapping to disk
