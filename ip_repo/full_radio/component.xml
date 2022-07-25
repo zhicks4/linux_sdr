@@ -199,12 +199,36 @@
       <spirit:parameters>
         <spirit:parameter>
           <spirit:name>POLARITY</spirit:name>
-          <spirit:value spirit:id="BUSIFPARAM_VALUE.S00_AXI_RST.POLARITY" spirit:choiceRef="choice_list_74b5137e">ACTIVE_LOW</spirit:value>
+          <spirit:value spirit:id="BUSIFPARAM_VALUE.S00_AXI_RST.POLARITY" spirit:choiceRef="choice_list_9d8b0d81">ACTIVE_LOW</spirit:value>
         </spirit:parameter>
       </spirit:parameters>
     </spirit:busInterface>
     <spirit:busInterface>
-      <spirit:name>S00_AXI_CLK</spirit:name>
+      <spirit:name>m_axis</spirit:name>
+      <spirit:busType spirit:vendor="xilinx.com" spirit:library="interface" spirit:name="axis" spirit:version="1.0"/>
+      <spirit:abstractionType spirit:vendor="xilinx.com" spirit:library="interface" spirit:name="axis_rtl" spirit:version="1.0"/>
+      <spirit:master/>
+      <spirit:portMaps>
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>TDATA</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>m_axis_tdata</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+        <spirit:portMap>
+          <spirit:logicalPort>
+            <spirit:name>TVALID</spirit:name>
+          </spirit:logicalPort>
+          <spirit:physicalPort>
+            <spirit:name>m_axis_tvalid</spirit:name>
+          </spirit:physicalPort>
+        </spirit:portMap>
+      </spirit:portMaps>
+    </spirit:busInterface>
+    <spirit:busInterface>
+      <spirit:name>s00_axi_aclk</spirit:name>
       <spirit:busType spirit:vendor="xilinx.com" spirit:library="signal" spirit:name="clock" spirit:version="1.0"/>
       <spirit:abstractionType spirit:vendor="xilinx.com" spirit:library="signal" spirit:name="clock_rtl" spirit:version="1.0"/>
       <spirit:slave/>
@@ -221,37 +245,13 @@
       <spirit:parameters>
         <spirit:parameter>
           <spirit:name>ASSOCIATED_BUSIF</spirit:name>
-          <spirit:value spirit:id="BUSIFPARAM_VALUE.S00_AXI_CLK.ASSOCIATED_BUSIF">S00_AXI:m_axis_data</spirit:value>
+          <spirit:value spirit:id="BUSIFPARAM_VALUE.S00_AXI_ACLK.ASSOCIATED_BUSIF">S00_AXI:m_axis</spirit:value>
         </spirit:parameter>
         <spirit:parameter>
-          <spirit:name>ASSOCIATED_RESET</spirit:name>
-          <spirit:value spirit:id="BUSIFPARAM_VALUE.S00_AXI_CLK.ASSOCIATED_RESET">s00_axi_aresetn</spirit:value>
+          <spirit:name>FREQ_TOLERANCE_HZ</spirit:name>
+          <spirit:value spirit:id="BUSIFPARAM_VALUE.S00_AXI_ACLK.FREQ_TOLERANCE_HZ">-1</spirit:value>
         </spirit:parameter>
       </spirit:parameters>
-    </spirit:busInterface>
-    <spirit:busInterface>
-      <spirit:name>m_axis_data</spirit:name>
-      <spirit:busType spirit:vendor="xilinx.com" spirit:library="interface" spirit:name="axis" spirit:version="1.0"/>
-      <spirit:abstractionType spirit:vendor="xilinx.com" spirit:library="interface" spirit:name="axis_rtl" spirit:version="1.0"/>
-      <spirit:master/>
-      <spirit:portMaps>
-        <spirit:portMap>
-          <spirit:logicalPort>
-            <spirit:name>TDATA</spirit:name>
-          </spirit:logicalPort>
-          <spirit:physicalPort>
-            <spirit:name>m_axis_data_tdata</spirit:name>
-          </spirit:physicalPort>
-        </spirit:portMap>
-        <spirit:portMap>
-          <spirit:logicalPort>
-            <spirit:name>TVALID</spirit:name>
-          </spirit:logicalPort>
-          <spirit:physicalPort>
-            <spirit:name>m_axis_data_tvalid</spirit:name>
-          </spirit:physicalPort>
-        </spirit:portMap>
-      </spirit:portMaps>
     </spirit:busInterface>
   </spirit:busInterfaces>
   <spirit:memoryMaps>
@@ -293,7 +293,7 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>viewChecksum</spirit:name>
-            <spirit:value>da673e8a</spirit:value>
+            <spirit:value>db580175</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -312,7 +312,7 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>viewChecksum</spirit:name>
-            <spirit:value>da673e8a</spirit:value>
+            <spirit:value>db580175</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -326,7 +326,7 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>viewChecksum</spirit:name>
-            <spirit:value>50ac646a</spirit:value>
+            <spirit:value>b7cb336b</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -361,7 +361,7 @@
     </spirit:views>
     <spirit:ports>
       <spirit:port>
-        <spirit:name>m_axis_data_tvalid</spirit:name>
+        <spirit:name>m_axis_tvalid</spirit:name>
         <spirit:wire>
           <spirit:direction>out</spirit:direction>
           <spirit:wireTypeDefs>
@@ -374,11 +374,11 @@
         </spirit:wire>
       </spirit:port>
       <spirit:port>
-        <spirit:name>m_axis_data_tdata</spirit:name>
+        <spirit:name>m_axis_tdata</spirit:name>
         <spirit:wire>
           <spirit:direction>out</spirit:direction>
           <spirit:vector>
-            <spirit:left spirit:format="long">31</spirit:left>
+            <spirit:left spirit:format="long">15</spirit:left>
             <spirit:right spirit:format="long">0</spirit:right>
           </spirit:vector>
           <spirit:wireTypeDefs>
@@ -721,7 +721,7 @@
       <spirit:enumeration>32</spirit:enumeration>
     </spirit:choice>
     <spirit:choice>
-      <spirit:name>choice_list_74b5137e</spirit:name>
+      <spirit:name>choice_list_9d8b0d81</spirit:name>
       <spirit:enumeration>ACTIVE_HIGH</spirit:enumeration>
       <spirit:enumeration>ACTIVE_LOW</spirit:enumeration>
     </spirit:choice>
@@ -737,6 +737,7 @@
       <spirit:file>
         <spirit:name>src/dds_compiler_0/dds_compiler_0.xci</spirit:name>
         <spirit:userFileType>xci</spirit:userFileType>
+        <spirit:userFileType>CELL_NAME_full_radio_v1_0_S00_AXI_inst/your_instance_name</spirit:userFileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/full_radio_v1_0_S00_AXI.vhd</spirit:name>
@@ -745,7 +746,7 @@
       <spirit:file>
         <spirit:name>hdl/full_radio_v1_0.vhd</spirit:name>
         <spirit:fileType>vhdlSource</spirit:fileType>
-        <spirit:userFileType>CHECKSUM_0d753476</spirit:userFileType>
+        <spirit:userFileType>CHECKSUM_1f8c60ec</spirit:userFileType>
       </spirit:file>
     </spirit:fileSet>
     <spirit:fileSet>
@@ -763,6 +764,7 @@
       <spirit:file>
         <spirit:name>src/dds_compiler_0/dds_compiler_0.xci</spirit:name>
         <spirit:userFileType>xci</spirit:userFileType>
+        <spirit:userFileType>CELL_NAME_full_radio_v1_0_S00_AXI_inst/your_instance_name</spirit:userFileType>
       </spirit:file>
       <spirit:file>
         <spirit:name>hdl/full_radio_v1_0_S00_AXI.vhd</spirit:name>
@@ -898,11 +900,11 @@
         <xilinx:taxonomy>AXI_Peripheral</xilinx:taxonomy>
       </xilinx:taxonomies>
       <xilinx:displayName>full_radio_v1.0</xilinx:displayName>
-      <xilinx:coreRevision>1</xilinx:coreRevision>
+      <xilinx:coreRevision>3</xilinx:coreRevision>
       <xilinx:upgrades>
         <xilinx:canUpgradeFrom>user.org:user:full_radio:1.0</xilinx:canUpgradeFrom>
       </xilinx:upgrades>
-      <xilinx:coreCreationDateTime>2022-07-02T21:41:14Z</xilinx:coreCreationDateTime>
+      <xilinx:coreCreationDateTime>2022-07-25T19:52:11Z</xilinx:coreCreationDateTime>
       <xilinx:tags>
         <xilinx:tag xilinx:name="ui.data.coregen.df@1ce88294_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio_1.0</xilinx:tag>
         <xilinx:tag xilinx:name="ui.data.coregen.df@edb5609_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio_1.0</xilinx:tag>
@@ -937,14 +939,58 @@
         <xilinx:tag xilinx:name="ui.data.coregen.df@598c291c_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio_1.0</xilinx:tag>
         <xilinx:tag xilinx:name="ui.data.coregen.df@4fd69058_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio_1.0</xilinx:tag>
         <xilinx:tag xilinx:name="ui.data.coregen.df@73c08ef4_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio_1.0</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@30767828_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@5a4f8c5f_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@234a96ae_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@e423375_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@7133c991_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@5a863b8c_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@79cc54a6_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@190bac86_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@2edcad57_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@37572b79_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@727b716e_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@70f34bb7_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@282d5310_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@5eb74726_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@15e0c397_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@50a92115_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@3c9212ab_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@7cc49463_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@6268d176_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@22657b6e_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@2e2ce164_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@d3780ff_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@4df73853_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@6c7cf11d_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@4d8b1229_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@4a5119ea_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@1b0c9b7d_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@3036234b_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@40a33011_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@50b32088_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@29517c2c_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@6bf8e1db_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@551a37f_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@5a522f23_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@59a0e916_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@535014f2_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@6a4736df_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@208b5bdc_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@293f9c33_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@6a93e721_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@609a74b4_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@38a80249_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@51a0ce8a_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
+        <xilinx:tag xilinx:name="ui.data.coregen.df@575a93d1_ARCHIVE_LOCATION">/home/doug/class/rpl_github/ip_repo/full_radio</xilinx:tag>
       </xilinx:tags>
     </xilinx:coreExtensions>
     <xilinx:packagingInfo>
       <xilinx:xilinxVersion>2021.2</xilinx:xilinxVersion>
-      <xilinx:checksum xilinx:scope="busInterfaces" xilinx:value="c5a43813"/>
+      <xilinx:checksum xilinx:scope="busInterfaces" xilinx:value="5b355af0"/>
       <xilinx:checksum xilinx:scope="memoryMaps" xilinx:value="ed1368d5"/>
-      <xilinx:checksum xilinx:scope="fileGroups" xilinx:value="360541fc"/>
-      <xilinx:checksum xilinx:scope="ports" xilinx:value="18f0a8bf"/>
+      <xilinx:checksum xilinx:scope="fileGroups" xilinx:value="510fed7a"/>
+      <xilinx:checksum xilinx:scope="ports" xilinx:value="fed3e9c0"/>
       <xilinx:checksum xilinx:scope="hdlParameters" xilinx:value="6992ea72"/>
       <xilinx:checksum xilinx:scope="parameters" xilinx:value="f9f3267b"/>
       <xilinx:targetDRCs>

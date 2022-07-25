@@ -220,7 +220,7 @@ proc create_root_design { parentCell } {
   # Create instance: lowlevel_dac_intfc_0, and set properties
   set lowlevel_dac_intfc_0 [ create_bd_cell -type ip -vlnv jhuapl.edu:user:lowlevel_dac_intfc:1.1 lowlevel_dac_intfc_0 ]
   set_property -dict [ list \
-   CONFIG.channels {2} \
+   CONFIG.channels {1} \
  ] $lowlevel_dac_intfc_0
 
   # Create instance: processing_system7_0, and set properties
@@ -728,7 +728,7 @@ gpio[0]#qspi0_ss_b#qspi0_io[0]#qspi0_io[1]#qspi0_io[2]#qspi0_io[3]/HOLD_B#qspi0_
 
   # Create interface connections
   connect_bd_intf_net -intf_net axi_iic_0_IIC [get_bd_intf_ports IIC_0] [get_bd_intf_pins axi_iic_0/IIC]
-  connect_bd_intf_net -intf_net dds_compiler_0_M_AXIS_DATA [get_bd_intf_pins full_radio_0/m_axis_data] [get_bd_intf_pins lowlevel_dac_intfc_0/data_in]
+  connect_bd_intf_net -intf_net dds_compiler_0_M_AXIS_DATA [get_bd_intf_pins full_radio_0/m_axis] [get_bd_intf_pins lowlevel_dac_intfc_0/data_in]
 connect_bd_intf_net -intf_net [get_bd_intf_nets dds_compiler_0_M_AXIS_DATA] [get_bd_intf_pins lowlevel_dac_intfc_0/data_in] [get_bd_intf_pins system_ila_0/SLOT_0_AXIS]
   connect_bd_intf_net -intf_net processing_system7_0_DDR [get_bd_intf_ports DDR] [get_bd_intf_pins processing_system7_0/DDR]
   connect_bd_intf_net -intf_net processing_system7_0_FIXED_IO [get_bd_intf_ports FIXED_IO] [get_bd_intf_pins processing_system7_0/FIXED_IO]

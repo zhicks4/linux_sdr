@@ -16,8 +16,8 @@ entity full_radio_v1_0 is
 	);
 	port (
 		-- Users to add ports here
-        m_axis_data_tvalid : out std_logic;
-        m_axis_data_tdata : out std_logic_vector(31 downto 0);
+        m_axis_tvalid : out std_logic;
+        m_axis_tdata : out std_logic_vector(15 downto 0);
 		-- User ports ends
 		-- Do not modify the ports beyond this line
 
@@ -56,6 +56,8 @@ architecture arch_imp of full_radio_v1_0 is
 		C_S_AXI_ADDR_WIDTH	: integer	:= 4
 		);
 		port (
+		m_axis_tvalid : out std_logic;
+		m_axis_tdata : out std_logic_Vector(15 downto 0);
 		S_AXI_ACLK	: in std_logic;
 		S_AXI_ARESETN	: in std_logic;
 		S_AXI_AWADDR	: in std_logic_vector(C_S_AXI_ADDR_WIDTH-1 downto 0);
@@ -80,13 +82,6 @@ architecture arch_imp of full_radio_v1_0 is
 		);
 	end component full_radio_v1_0_S00_AXI;
 
-    COMPONENT dds_compiler_0
-    PORT (
-        aclk : IN STD_LOGIC;
-        m_axis_data_tvalid : OUT STD_LOGIC;
-        m_axis_data_tdata : OUT STD_LOGIC_VECTOR(31 DOWNTO 0)
-    );
-    END COMPONENT;
 
 begin
 
@@ -97,6 +92,8 @@ full_radio_v1_0_S00_AXI_inst : full_radio_v1_0_S00_AXI
 		C_S_AXI_ADDR_WIDTH	=> C_S00_AXI_ADDR_WIDTH
 	)
 	port map (
+	    m_axis_tdata => m_axis_tdata,
+        m_axis_tvalid => m_axis_tvalid,
 		S_AXI_ACLK	=> s00_axi_aclk,
 		S_AXI_ARESETN	=> s00_axi_aresetn,
 		S_AXI_AWADDR	=> s00_axi_awaddr,
@@ -122,12 +119,8 @@ full_radio_v1_0_S00_AXI_inst : full_radio_v1_0_S00_AXI
 
 	-- Add user logic here
 
-your_instance_name : dds_compiler_0
-  PORT MAP (
-    aclk => s00_axi_aclk,
-    m_axis_data_tvalid => m_axis_data_tvalid,
-    m_axis_data_tdata => m_axis_data_tdata
-  );
+
+
 	-- User logic ends
 
 end arch_imp;

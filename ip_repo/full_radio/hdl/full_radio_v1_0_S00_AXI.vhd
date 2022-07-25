@@ -16,7 +16,8 @@ entity full_radio_v1_0_S00_AXI is
 	);
 	port (
 		-- Users to add ports here
-
+        m_axis_tdata : out std_logic_vector(15 downto 0);
+        m_axis_tvalid : out std_logic;
 		-- User ports ends
 		-- Do not modify the ports beyond this line
 
@@ -117,6 +118,17 @@ architecture arch_imp of full_radio_v1_0_S00_AXI is
 	signal reg_data_out	:std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
 	signal byte_index	: integer;
 	signal aw_en	: std_logic;
+
+COMPONENT dds_compiler_0
+  PORT (
+    aclk : IN STD_LOGIC;
+    aresetn : IN STD_LOGIC;
+    s_axis_phase_tvalid : IN STD_LOGIC;
+    s_axis_phase_tdata : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+    m_axis_data_tvalid : OUT STD_LOGIC;
+    m_axis_data_tdata : OUT STD_LOGIC_VECTOR(15 DOWNTO 0)
+  );
+    END COMPONENT;
 
 begin
 	-- I/O Connections assignments
@@ -355,7 +367,7 @@ begin
 	      when b"00" =>
 	        reg_data_out <= slv_reg0;
 	      when b"01" =>
-	        reg_data_out <= slv_reg1;
+	        reg_data_out <= x"DEADBEEF";
 	      when b"10" =>
 	        reg_data_out <= slv_reg2;
 	      when b"11" =>
@@ -385,6 +397,17 @@ begin
 
 
 	-- Add user logic here
+
+your_instance_name : dds_compiler_0
+  PORT MAP (
+    aclk => s_axi_aclk,
+    aresetn => '1',
+    s_axis_phase_tvalid => '1',
+    s_axis_phase_tdata => slv_reg0,
+    m_axis_data_tvalid => m_axis_tvalid,
+    m_axis_data_tdata => m_axis_tdata
+  );
+
 
 	-- User logic ends
 
