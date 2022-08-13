@@ -28,7 +28,7 @@ int main()
     volatile unsigned int *my_periph = get_a_pointer(RADIO_PERIPH_ADDRESS);	
     printf("\r\n\r\n\r\nLab 6 Silly Register Read and Write Program\n\r");
     printf("Writing 4 registers in the periph with a counting pattern\n");
-    my_periph[0] = 0; my_periph[1] = 1; my_perpiph[2] = 2; my_periph[3] = 3;
+    my_periph[0] = 0; my_periph[1] = 1; my_periph[2] = 2; my_periph[3] = 3;
     for (int i = 0; i<8; i++)
     	printf("reading address %x = %x\n",RADIO_PERIPH_ADDRESS+4*i, my_periph[i]);
     printf("was that what you expected?\n");
