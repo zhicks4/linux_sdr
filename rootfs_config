@@ -3,7 +3,8 @@
 # Configuration
 #
 CONFIG_system-zynq=y
-
+CONFIG_iperf3=y
+CONFIG_python3-protobuf=y
 #
 # Filesystem Packages 
 #
@@ -987,7 +988,7 @@ CONFIG_pciutils=y
 # python3-numpy 
 #
 # CONFIG_python3-numpy is not set
-# CONFIG_python3-numpy-dev is not set
+CONFIG_python3-numpy-dev=y
 # CONFIG_python3-numpy-dbg is not set
 
 #
@@ -2056,7 +2057,7 @@ CONFIG_run-postinsts=y
 #
 # protobuf
 #
-# CONFIG_protobuf is not set
+CONFIG_protobuf=y
 
 #
 # zlib 
@@ -3890,6 +3891,6 @@ CONFIG_Init-manager-sysvinit=y
 #
 # PetaLinux RootFS Settings
 #
-CONFIG_ADD_EXTRA_USERS="root:root;petalinux::passwd-expire;"
+CONFIG_ADD_EXTRA_USERS="root:root;petalinux::passwd-expire;student:student"
 CONFIG_ADD_USERS_TO_GROUPS="petalinux:audio,video;"
-CONFIG_ADD_USERS_TO_SUDOERS="petalinux"
+CONFIG_ADD_USERS_TO_SUDOERS="student"
