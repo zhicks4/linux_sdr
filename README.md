@@ -1,6 +1,6 @@
 # radio_periph_lab
 
-Note : if you are building in windows and vivado is not installed in c:\Xilinx\Vivado\2021.2, you will have to change one thing
+Note : if you are building in windows and vivado is not installed in c:\Xilinx\Vivado\2022.1, you will have to change one thing
 I included the settings64.bat file in the make_project.bat just to save a step.  Change that to your Install directory
 
 run make_project.bat (windows) or make_project.sh (linux) to build the project all the way through SD card creation.  You can of course
