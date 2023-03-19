@@ -13,6 +13,7 @@ library UNISIM;
 use UNISIM.VCOMPONENTS.ALL;
 entity design_1_wrapper is
   port (
+    clk125 : in STD_LOGIC;
     DDR_addr : inout STD_LOGIC_VECTOR ( 14 downto 0 );
     DDR_ba : inout STD_LOGIC_VECTOR ( 2 downto 0 );
     DDR_cas_n : inout STD_LOGIC;
@@ -36,8 +37,6 @@ entity design_1_wrapper is
     FIXED_IO_ps_srstb : inout STD_LOGIC;
     IIC_0_scl_io : inout STD_LOGIC;
     IIC_0_sda_io : inout STD_LOGIC;
-    UART_1_0_rxd : in STD_LOGIC;
-    UART_1_0_txd : out STD_LOGIC;
     ac_muten : out STD_LOGIC ;
     bclk : out STD_LOGIC;
     lrck : out STD_LOGIC;
@@ -49,10 +48,11 @@ end design_1_wrapper;
 architecture STRUCTURE of design_1_wrapper is
   component design_1 is
   port (
-    sdata : out STD_LOGIC;
-    lrck : out STD_LOGIC;
     bclk : out STD_LOGIC;
+    lrck : out STD_LOGIC;
     mclk : out STD_LOGIC;
+    sdata : out STD_LOGIC;
+    clk125 : in STD_LOGIC;
     IIC_0_scl_i : in STD_LOGIC;
     IIC_0_scl_o : out STD_LOGIC;
     IIC_0_scl_t : out STD_LOGIC;
@@ -79,9 +79,7 @@ architecture STRUCTURE of design_1_wrapper is
     FIXED_IO_ddr_vrp : inout STD_LOGIC;
     FIXED_IO_ps_srstb : inout STD_LOGIC;
     FIXED_IO_ps_clk : inout STD_LOGIC;
-    FIXED_IO_ps_porb : inout STD_LOGIC;
-    UART_1_0_txd : out STD_LOGIC;
-    UART_1_0_rxd : in STD_LOGIC
+    FIXED_IO_ps_porb : inout STD_LOGIC
   );
   end component design_1;
   component IOBUF is
@@ -142,12 +140,11 @@ design_1_i: component design_1
       IIC_0_sda_i => IIC_0_sda_i,
       IIC_0_sda_o => IIC_0_sda_o,
       IIC_0_sda_t => IIC_0_sda_t,
-      UART_1_0_rxd => UART_1_0_rxd,
-      UART_1_0_txd => UART_1_0_txd,
       bclk => bclk,
       lrck => lrck,
       mclk => mclk,
-      sdata => sdata
+      sdata => sdata,
+      clk125=>clk125
     );
     
 ac_muten <= '1';    

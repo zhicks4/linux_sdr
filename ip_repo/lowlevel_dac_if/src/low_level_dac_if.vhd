@@ -5,7 +5,7 @@ use ieee.numeric_std.all;
 entity lowlevel_dac_intfc is 
 generic ( channels : in integer := 2 );
 port (
-        rst                 : in std_logic; -- active high asynchronous reset
+        resetn                : in std_logic; -- active low synchronous reset
         clk125              : in std_logic; -- the clock for all flops in your design
         data_word           : in std_logic_vector(channels*16-1 downto 0); -- 32 bit input data
         sdata               : out std_logic; -- serial data out to the DAC
@@ -37,20 +37,20 @@ begin
  -- lets make the clock = 125MHz / 10 = 12.5MHz
  clk12p5 <= not clk12p5 when rising_edge(clk125) and clk5_pulse = '1';
  make12p5MHz: entity work.clkdivider generic map (divideby => 5)
-    port map (clk => clk125, reset=> rst, pulseout => clk5_pulse);
+    port map (clk => clk125, resetn=> resetn, pulseout => clk5_pulse);
 
 -- Now, lets make the bclk signal, which will be the main clk125 divided by 80 
 bclk_tim : entity work.clkdivider generic map (divideby => 40)
-                        port map (clk => clk125, reset => rst, pulseout => toggle_bclk);
+                        port map (clk => clk125, resetn => resetn, pulseout => toggle_bclk);
                     
 bclk_falling_edge <= toggle_bclk and bclk_i;
 
-bclk_maker : process(clk125,rst)
+bclk_maker : process(clk125,resetn)
 begin
-    if rst = '1' then
-        bclk_i <= '0';
-    elsif rising_edge(clk125) then
-        if toggle_bclk = '1' then
+    if rising_edge(clk125) then
+        if resetn = '0' then
+            bclk_i <= '0';
+        elsif toggle_bclk = '1' then
             bclk_i <= not bclk_i;
         end if;
      end if;
@@ -62,38 +62,38 @@ begin
  -- bitcount keeps track of 32 positions.  LRCK is high for 0-15, low for 16-31
  -- new data is loaded into the shift register at bitcount=1 
  
- shifterproc : process(clk125,rst)
+ shifterproc : process(clk125,resetn)
  begin
-    if rst = '1' then
-        shiftreg <= x"00000000";
-        latched_data <= '0';
-        lrck <= '0';
-        bitcount <= (others=>'0');
-    elsif rising_edge(clk125) then
-        latched_data <= '0';
-        if bclk_falling_edge = '1' then
-            bitcount <= bitcount+1;
-            shiftreg <= shift_left(shiftreg,1);
-            if bitcount = 0 then
-                lrck <= '1';
-            elsif bitcount = 1 then  -- grab a new data word 
-                if (channels = 2)then
-                    shiftreg <= unsigned(data_word);
-                else
-                    shiftreg <= unsigned(data_word & data_word);
-                end if; 
-                latched_data <= '1';
-            elsif bitcount = 16 then
-                lrck <= '0';
+    if rising_edge(clk125) then
+        if resetn = '0' then
+            shiftreg <= x"00000000";
+            latched_data <= '0';
+            lrck <= '0';
+            bitcount <= (others=>'0');
+        else
+            latched_data <= '0';
+            if bclk_falling_edge = '1' then
+                bitcount <= bitcount+1;
+                shiftreg <= shift_left(shiftreg,1);
+                if bitcount = 0 then
+                    lrck <= '1';
+                elsif bitcount = 1 then  -- grab a new data word 
+                    if (channels = 2)then
+                        shiftreg <= unsigned(data_word);
+                    else
+                        shiftreg <= unsigned(data_word & data_word);
+                    end if; 
+                    latched_data <= '1';
+                elsif bitcount = 16 then
+                    lrck <= '0';
+                end if;
             end if;
         end if;
-    end if;
+    end if; --r.e.clk
  end process shifterproc;
  
  sdata <= shiftreg(31);
  mclk <= clk12p5; 
  bclk <= bclk_i; 
 
-
-   
 end Behavioral;

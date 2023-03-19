@@ -34,23 +34,32 @@ void write_codec_register(unsigned int codec_reg_num, unsigned int data)
 	   XIic_Send(IIC_BASE_ADDRESS,	CODEC_ADDRESS,	databuf,2,XIIC_STOP);
 }
 
+void set_dacif_resetn(int gpo)
+{
+	XIic_WriteReg(XPAR_IIC_0_BASEADDR, XIIC_GPO_REG_OFFSET, gpo);
+}
+
 void configure_codec()
 {
-	write_codec_register(15,0x00);  //Reset
-    usleep(1000);
-    write_codec_register(6,0x30);  // power on everything except OUT and OSC
-    write_codec_register(0,0x17);
-    write_codec_register(1,0x17);
-    write_codec_register(2,0x79);
-    write_codec_register(3,0x79);
-    write_codec_register(4,0x10);
-    write_codec_register(5,0x00);
-    write_codec_register(7,0x02);
-    write_codec_register(8,0x00);
-    usleep(75000);
-    write_codec_register(9,0x01);  // set active bit
-    write_codec_register(6,0x00);  // set "out"
+     set_dacif_resetn(0);
+     write_codec_register(15,0x00);
+     usleep(1000);
+     write_codec_register(6,0x37);
+     write_codec_register(0,0x80);
+     write_codec_register(1,0x80);
+     write_codec_register(2,0x79);
+     write_codec_register(3,0x79);
+     write_codec_register(4,0x10);
+     write_codec_register(5,0x00);
+     write_codec_register(7,0x02);
+     write_codec_register(8,0x00);
+     usleep(75000);
+     write_codec_register(6,0x27);
+     usleep(75000);
+     write_codec_register(9,0x01);
+     set_dacif_resetn(1);
 }
+
 
 
 int main()

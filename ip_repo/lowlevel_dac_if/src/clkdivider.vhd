@@ -8,28 +8,31 @@ use IEEE.STD_LOGIC_1164.ALL;
 
 entity clkdivider is
     generic (divideby : natural := 2);
-    Port ( clk : in std_logic;
-           reset : in std_logic;
-           pulseout : out std_logic);
+    Port (
+        clk : in std_logic;
+        resetn : in std_logic;
+        pulseout : out std_logic);
 end clkdivider;
 
 
 architecture Behavioral of clkdivider is
-signal cnt : natural range 0 to divideby-1;
+    signal cnt : natural range 0 to divideby-1 := 0;
 begin
 
-process(clk,reset)
-begin
-	if reset='1' then
-		cnt<=0;
-	elsif rising_edgE(clk) then
-		if (cnt = divideby-1)  then
-			cnt <= 0;
-		else
-			cnt <= cnt+1;
-		end if;
-	end if;
-end process;
-pulseout <= '1' when cnt=divideby-1 else '0';
+    process(clk,resetn)
+    begin
+        if rising_edge(clk) then
+            if resetn='0' then
+                cnt<=0;
+            else
+                if (cnt = divideby-1)  then
+                    cnt <= 0;
+                else
+                    cnt <= cnt+1;
+                end if;
+            end if;
+        end if;
+    end process;
+    pulseout <= '1' when cnt=divideby-1 else '0';
 end Behavioral;
 
