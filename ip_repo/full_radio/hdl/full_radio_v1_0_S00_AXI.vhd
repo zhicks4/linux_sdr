@@ -16,7 +16,7 @@ entity full_radio_v1_0_S00_AXI is
 	);
 	port (
 		-- Users to add ports here
-        m_axis_tdata : out std_logic_vector(15 downto 0);
+        m_axis_tdata : out std_logic_vector(31 downto 0);
         m_axis_tvalid : out std_logic;
 		-- User ports ends
 		-- Do not modify the ports beyond this line
@@ -118,17 +118,27 @@ architecture arch_imp of full_radio_v1_0_S00_AXI is
 	signal reg_data_out	:std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
 	signal byte_index	: integer;
 	signal aw_en	: std_logic;
-
-COMPONENT dds_compiler_0
-  PORT (
-    aclk : IN STD_LOGIC;
-    aresetn : IN STD_LOGIC;
-    s_axis_phase_tvalid : IN STD_LOGIC;
-    s_axis_phase_tdata : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
-    m_axis_data_tvalid : OUT STD_LOGIC;
-    m_axis_data_tdata : OUT STD_LOGIC_VECTOR(15 DOWNTO 0)
-  );
-    END COMPONENT;
+	
+	signal dds_resetn : std_logic;
+	signal count : unsigned(31 downto 0);
+	
+    ------------------------------------------------------------
+    ------------------------ Components ------------------------
+    ------------------------------------------------------------
+    
+    component ddc
+        port (
+            clk : in STD_LOGIC;
+            resetn : in STD_LOGIC;
+            -- ADC Input
+            adc_dds_phase_inc_data : in STD_LOGIC_VECTOR(31 downto 0);
+            -- Mixer Input
+            mixer_dds_phase_inc_data : in STD_LOGIC_VECTOR(31 downto 0);
+            -- Filter Output
+            m_axis_data_tvalid : out STD_LOGIC;
+            m_axis_data_tdata : out STD_LOGIC_VECTOR(31 downto 0)
+        );
+    end component;
 
 begin
 	-- I/O Connections assignments
@@ -259,13 +269,13 @@ begin
 	              end if;
 	            end loop;
 	          when b"11" =>
-	            for byte_index in 0 to (C_S_AXI_DATA_WIDTH/8-1) loop
-	              if ( S_AXI_WSTRB(byte_index) = '1' ) then
-	                -- Respective byte enables are asserted as per write strobes                   
-	                -- slave registor 3
-	                slv_reg3(byte_index*8+7 downto byte_index*8) <= S_AXI_WDATA(byte_index*8+7 downto byte_index*8);
-	              end if;
-	            end loop;
+--	            for byte_index in 0 to (C_S_AXI_DATA_WIDTH/8-1) loop
+--	              if ( S_AXI_WSTRB(byte_index) = '1' ) then
+--	                -- Respective byte enables are asserted as per write strobes                   
+--	                -- slave registor 3
+--	                slv_reg3(byte_index*8+7 downto byte_index*8) <= S_AXI_WDATA(byte_index*8+7 downto byte_index*8);
+--	              end if;
+--	            end loop;
 	          when others =>
 	            slv_reg0 <= slv_reg0;
 	            slv_reg1 <= slv_reg1;
@@ -367,7 +377,7 @@ begin
 	      when b"00" =>
 	        reg_data_out <= slv_reg0;
 	      when b"01" =>
-	        reg_data_out <= x"DEADBEEF";
+	        reg_data_out <= slv_reg1;
 	      when b"10" =>
 	        reg_data_out <= slv_reg2;
 	      when b"11" =>
@@ -398,16 +408,30 @@ begin
 
 	-- Add user logic here
 
-your_instance_name : dds_compiler_0
-  PORT MAP (
-    aclk => s_axi_aclk,
-    aresetn => '1',
-    s_axis_phase_tvalid => '1',
-    s_axis_phase_tdata => slv_reg0,
-    m_axis_data_tvalid => m_axis_tvalid,
-    m_axis_data_tdata => m_axis_tdata
-  );
+    full_ddc : ddc
+    port map (
+        clk => S_AXI_ACLK,
+        resetn => dds_resetn,
+        adc_dds_phase_inc_data => slv_reg0,
+        mixer_dds_phase_inc_data => slv_reg1,
+        m_axis_data_tvalid => m_axis_tvalid,
+        m_axis_data_tdata => m_axis_tdata
+    ); 
+    
+    dds_resetn <= not slv_reg2(0);
 
+    counter : process(S_AXI_ACLK, S_AXI_ARESETN)
+    begin
+    
+        if (S_AXI_ARESETN = '0') then
+                count <= (others => '0');
+        elsif (rising_edge(S_AXI_ACLK)) then
+            count <= count + 1;
+        end if;
+    
+    end process;
+    
+    slv_reg3 <= std_logic_vector(count);
 
 	-- User logic ends
 
