@@ -381,7 +381,7 @@ begin
 	      when b"10" =>
 	        reg_data_out <= slv_reg2;
 	      when b"11" =>
-	        reg_data_out <= slv_reg3;
+	        reg_data_out <= std_logic_vector(count);
 	      when others =>
 	        reg_data_out  <= (others => '0');
 	    end case;
@@ -420,19 +420,19 @@ begin
     
     dds_resetn <= not slv_reg2(0);
 
-    counter : process(S_AXI_ACLK, S_AXI_ARESETN)
+    counter : process(S_AXI_ACLK)
     begin
     
-        if (S_AXI_ARESETN = '0') then
+        if (rising_edge(S_AXI_ACLK)) then
+            if (S_AXI_ARESETN = '0') then
                 count <= (others => '0');
-        elsif (rising_edge(S_AXI_ACLK)) then
-            count <= count + 1;
+            else
+                count <= count + 1;
+            end if;
         end if;
     
     end process;
     
-    slv_reg3 <= std_logic_vector(count);
-
 	-- User logic ends
 
 end arch_imp;
