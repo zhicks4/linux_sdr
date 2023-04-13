@@ -23,8 +23,8 @@ tuner_offset = 0x04
 ctrl_offset = 0x08
 timer_offset = 0x0c
 fifo_base_addr = 0x43c10000
-fifo_count_offset = 0x00
-fifo_data_offset = 0x04
+fifo_data_offset = 0x00
+fifo_count_offset = 0x04
 
 # Define constants
 SAMP_FREQ = 125000000
@@ -32,38 +32,41 @@ PHASE_RESOLUTION_BITS = 27
 
 # Open memory-mapped peripheral location
 file = os.open('/dev/mem', os.O_RDWR, os.O_SYNC)
-mem = mmap.mmap(file, 4096, offset=radio_periph_base_addr)
+mem_radio = mmap.mmap(file, 4096, offset=radio_periph_base_addr)
+mem_fifo = mmap.mmap(file, 4096, offset=fifo_base_addr)
 
 # Misc global variables
 mute = 0
 
 
-def set_radio_reg(offset, val):
+def set_radio_reg(dev, offset, val):
     '''
     Sets the value of the specified radio control register
 
     Parameters:
+        dev (hex): the memory mapped device to write to, from {mem_radio, mem_fifo}
         offset (hex): the desired register memory offset value, from {adc_offset, tuner_offset, ctrl_offset, timer_offset}
-
+        val (int): the value to write to the specified register
     Returns:
         None  
     '''
-    mem.seek(offset)
-    mem.write(struct.pack('i', int(val)))
+    dev.seek(offset)
+    dev.write(struct.pack('i', int(val)))
 
 
-def get_radio_reg(offset):
+def get_radio_reg(dev, offset):
     '''
     Returns the value of the specified 32-bit radio control register
 
     Parameters:
+        dev (hex): the memory mapped device to write to, from {mem_radio, mem_fifo}
         offset (hex): the specified register memory offset value, from {adc_offset, tuner_offset, ctrl_offset, timer_offset}
 
     Returns:
         val (int): the value from the specified register
     '''
-    mem.seek(offset)
-    val = int.from_bytes(mem.read(4), 'little')
+    dev.seek(offset)
+    val = int.from_bytes(dev.read(4), 'little')
     return val
 
 
@@ -88,7 +91,7 @@ def send_packet(sock, payload, udp_ip, udp_port):
 def toggle_mute():
     global mute
     mute ^= 1
-    set_radio_reg(ctrl_offset, mute)
+    set_radio_reg(mem_radio, ctrl_offset, mute)
     if (mute):
         print('    Muted')
     else:
@@ -144,28 +147,28 @@ def main(udp_ip, udp_port, adc_freq, tuner_freq):
         if (command == 'f' or command == 'frequency'):
             adc_freq = int(input('Enter an ADC frequency: '))
             adc_phase_inc = freq_to_inc(adc_freq)
-            set_radio_reg(adc_offset, adc_phase_inc)
+            set_radio_reg(mem_radio, adc_offset, adc_phase_inc)
             print_freq_update(adc_freq, adc_phase_inc)
         elif (command == 't' or command == 'tune'):
             tuner_freq = int(input('Enter a tuner frequency: '))
             tuner_phase_inc = freq_to_inc(tuner_freq)
-            set_radio_reg(tuner_offset, tuner_phase_inc)
+            set_radio_reg(mem_radio, tuner_offset, tuner_phase_inc)
             print_freq_update(tuner_freq, tuner_phase_inc)
         elif (command == 'u'):
             adc_freq += 100
             adc_phase_inc = freq_to_inc(adc_freq)
-            set_radio_reg(adc_offset, adc_phase_inc)
+            set_radio_reg(mem_radio, adc_offset, adc_phase_inc)
             print_freq_update(adc_freq, adc_phase_inc)
         elif (command == 'U'):
             adc_freq += 1000
             adc_phase_inc = freq_to_inc(adc_freq)
-            set_radio_reg(adc_offset, adc_phase_inc)
+            set_radio_reg(mem_radio, adc_offset, adc_phase_inc)
             print_freq_update(adc_freq, adc_phase_inc)
         elif (command == 'd'):
             if (adc_freq >= 100):
                 adc_freq -= 100
                 adc_phase_inc = freq_to_inc(adc_freq)
-                set_radio_reg(adc_offset, adc_phase_inc)
+                set_radio_reg(mem_radio, adc_offset, adc_phase_inc)
                 print_freq_update(adc_freq, adc_phase_inc)
             else:
                 print('Frequency cannot be decreased any further!')
@@ -173,7 +176,7 @@ def main(udp_ip, udp_port, adc_freq, tuner_freq):
             if (adc_freq >= 1000):
                 adc_freq -= 1000
                 adc_phase_inc = freq_to_inc(adc_freq)
-                set_radio_reg(adc_offset, adc_phase_inc)
+                set_radio_reg(mem_radio, adc_offset, adc_phase_inc)
                 print_freq_update(adc_freq, adc_phase_inc)
             else:
                 print('Frequency cannot be decreased any further!')
