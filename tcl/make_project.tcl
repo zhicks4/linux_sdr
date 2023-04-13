@@ -1,4 +1,4 @@
-set project_name "radio_periph_lab"
+set project_name "linux_sdr"
 create_project ${project_name} ./vivado -part xc7z020clg400-1 -force
 
 set proj_dir [get_property directory [current_project]]
@@ -14,7 +14,7 @@ update_ip_catalog
  
 # make block design
 
-source ./tcl/design_1.tcl 
+source ./tcl/linux_sdr.tcl 
 
 close_project
 

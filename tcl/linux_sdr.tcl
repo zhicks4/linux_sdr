@@ -48,7 +48,7 @@ if { $list_projs eq "" } {
 
 
 # CHANGE DESIGN NAME HERE
-variable design_name
+variable linux_sdr
 set design_name design_1
 
 # If you do not already have an existing IP Integrator design open,

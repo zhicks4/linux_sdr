@@ -1,4 +1,4 @@
-set project_name "radio_periph_lab"
+set project_name "linux_sdr"
 open_project ./vivado/${project_name}.xpr
 
 
