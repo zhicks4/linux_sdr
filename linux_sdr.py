@@ -2,7 +2,7 @@
 
 ### Linux SDR
 # Interfaces with the created radio peripheral IP core to set the simulated ADC frequency and the tuner frequency
-# Generated samples are transmitted over a UDP connection to a specified IP address and UDP port
+# Generated samples are played over the speaker and transmitted over a UDP connection to a specified IP address and UDP port
 
 ### UDP Frame format
 # Bytes 0-1: 16-bit unsigned counter, increments by one in each transmitted UDP frame
@@ -138,7 +138,7 @@ def main(udp_ip, udp_port, adc_freq, tuner_freq):
     '''
 
     print('\nLinux SDR with Ethernet - Zach Hicks\n')
-    print(f'Currently configured to transmit UDP packets to {ip}:{port}')
+    print(f'Initially configured to transmit UDP packets to {ip}:{port}')
     print_instructions()
 
     while(1):

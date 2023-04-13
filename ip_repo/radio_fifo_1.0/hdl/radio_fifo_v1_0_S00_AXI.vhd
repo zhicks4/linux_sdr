@@ -422,7 +422,7 @@ begin
             m_axis_tdata => fifo_data,
             axis_rd_data_count => fifo_count
         );
-    fifo_valid <= slv_reg_rden when (axi_araddr(ADDR_LSB + OPT_MEM_ADDR_BITS downto ADDR_LSB) = x"00")
+    fifo_ready <= slv_reg_rden when (axi_araddr(ADDR_LSB + OPT_MEM_ADDR_BITS downto ADDR_LSB) = x"00")
                   else '0'; 
 	-- User logic ends
 

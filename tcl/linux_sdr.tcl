@@ -48,7 +48,7 @@ if { $list_projs eq "" } {
 
 
 # CHANGE DESIGN NAME HERE
-variable linux_sdr
+variable design_name
 set design_name design_1
 
 # If you do not already have an existing IP Integrator design open,
@@ -124,9 +124,11 @@ set bCheckIPs 1
 if { $bCheckIPs == 1 } {
    set list_check_ips "\ 
 xilinx.com:ip:axi_iic:2.1\
+xilinx.com:ip:axis_broadcaster:1.1\
 jhu.edu:user:full_radio:1.0\
 jhuapl.edu:user:lowlevel_dac_intfc:1.1\
 xilinx.com:ip:processing_system7:5.5\
+xilinx.com:user:radio_fifo:1.0\
 xilinx.com:ip:proc_sys_reset:5.0\
 xilinx.com:ip:system_ila:1.1\
 xilinx.com:ip:xpm_cdc_gen:1.0\
@@ -217,6 +219,9 @@ proc create_root_design { parentCell } {
    CONFIG.IIC_BOARD_INTERFACE {Custom} \
    CONFIG.USE_BOARD_FLOW {true} \
  ] $axi_iic_0
+
+  # Create instance: axis_broadcaster_0, and set properties
+  set axis_broadcaster_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axis_broadcaster:1.1 axis_broadcaster_0 ]
 
   # Create instance: full_radio_0, and set properties
   set full_radio_0 [ create_bd_cell -type ip -vlnv jhu.edu:user:full_radio:1.0 full_radio_0 ]
@@ -712,8 +717,11 @@ gpio[0]#qspi0_ss_b#qspi0_io[0]#qspi0_io[1]#qspi0_io[2]#qspi0_io[3]/HOLD_B#qspi0_
   # Create instance: ps7_0_axi_periph, and set properties
   set ps7_0_axi_periph [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_interconnect:2.1 ps7_0_axi_periph ]
   set_property -dict [ list \
-   CONFIG.NUM_MI {2} \
+   CONFIG.NUM_MI {3} \
  ] $ps7_0_axi_periph
+
+  # Create instance: radio_fifo_0, and set properties
+  set radio_fifo_0 [ create_bd_cell -type ip -vlnv xilinx.com:user:radio_fifo:1.0 radio_fifo_0 ]
 
   # Create instance: rst_ps7_0_125M, and set properties
   set rst_ps7_0_125M [ create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 rst_ps7_0_125M ]
@@ -724,9 +732,9 @@ gpio[0]#qspi0_ss_b#qspi0_io[0]#qspi0_io[1]#qspi0_io[2]#qspi0_io[3]/HOLD_B#qspi0_
    CONFIG.ALL_PROBE_SAME_MU_CNT {2} \
    CONFIG.C_DATA_DEPTH {1024} \
    CONFIG.C_EN_STRG_QUAL {1} \
-   CONFIG.C_NUM_MONITOR_SLOTS {2} \
+   CONFIG.C_NUM_MONITOR_SLOTS {3} \
    CONFIG.C_PROBE0_MU_CNT {2} \
-   CONFIG.C_SLOT {1} \
+   CONFIG.C_SLOT {2} \
    CONFIG.C_SLOT_0_INTF_TYPE {xilinx.com:interface:axis_rtl:1.0} \
  ] $system_ila_0
 
@@ -739,14 +747,18 @@ gpio[0]#qspi0_ss_b#qspi0_io[0]#qspi0_io[1]#qspi0_io[2]#qspi0_io[3]/HOLD_B#qspi0_
 
   # Create interface connections
   connect_bd_intf_net -intf_net axi_iic_0_IIC [get_bd_intf_ports IIC_0] [get_bd_intf_pins axi_iic_0/IIC]
-  connect_bd_intf_net -intf_net dds_compiler_0_M_AXIS_DATA [get_bd_intf_pins full_radio_0/m_axis] [get_bd_intf_pins lowlevel_dac_intfc_0/data_in]
-connect_bd_intf_net -intf_net [get_bd_intf_nets dds_compiler_0_M_AXIS_DATA] [get_bd_intf_pins lowlevel_dac_intfc_0/data_in] [get_bd_intf_pins system_ila_0/SLOT_0_AXIS]
+  connect_bd_intf_net -intf_net axis_broadcaster_0_M00_AXIS [get_bd_intf_pins axis_broadcaster_0/M00_AXIS] [get_bd_intf_pins lowlevel_dac_intfc_0/data_in]
+  connect_bd_intf_net -intf_net axis_broadcaster_0_M01_AXIS [get_bd_intf_pins axis_broadcaster_0/M01_AXIS] [get_bd_intf_pins radio_fifo_0/s_axis]
+  connect_bd_intf_net -intf_net dds_compiler_0_M_AXIS_DATA [get_bd_intf_pins axis_broadcaster_0/S_AXIS] [get_bd_intf_pins full_radio_0/m_axis]
+connect_bd_intf_net -intf_net [get_bd_intf_nets dds_compiler_0_M_AXIS_DATA] [get_bd_intf_pins axis_broadcaster_0/S_AXIS] [get_bd_intf_pins system_ila_0/SLOT_0_AXIS]
   connect_bd_intf_net -intf_net processing_system7_0_DDR [get_bd_intf_ports DDR] [get_bd_intf_pins processing_system7_0/DDR]
   connect_bd_intf_net -intf_net processing_system7_0_FIXED_IO [get_bd_intf_ports FIXED_IO] [get_bd_intf_pins processing_system7_0/FIXED_IO]
   connect_bd_intf_net -intf_net processing_system7_0_M_AXI_GP0 [get_bd_intf_pins processing_system7_0/M_AXI_GP0] [get_bd_intf_pins ps7_0_axi_periph/S00_AXI]
   connect_bd_intf_net -intf_net ps7_0_axi_periph_M00_AXI [get_bd_intf_pins full_radio_0/S00_AXI] [get_bd_intf_pins ps7_0_axi_periph/M00_AXI]
 connect_bd_intf_net -intf_net [get_bd_intf_nets ps7_0_axi_periph_M00_AXI] [get_bd_intf_pins ps7_0_axi_periph/M00_AXI] [get_bd_intf_pins system_ila_0/SLOT_1_AXI]
   connect_bd_intf_net -intf_net ps7_0_axi_periph_M01_AXI [get_bd_intf_pins axi_iic_0/S_AXI] [get_bd_intf_pins ps7_0_axi_periph/M01_AXI]
+  connect_bd_intf_net -intf_net ps7_0_axi_periph_M02_AXI [get_bd_intf_pins ps7_0_axi_periph/M02_AXI] [get_bd_intf_pins radio_fifo_0/S00_AXI]
+connect_bd_intf_net -intf_net [get_bd_intf_nets ps7_0_axi_periph_M02_AXI] [get_bd_intf_pins ps7_0_axi_periph/M02_AXI] [get_bd_intf_pins system_ila_0/SLOT_2_AXI]
 
   # Create port connections
   connect_bd_net -net axi_iic_0_gpo [get_bd_pins axi_iic_0/gpo] [get_bd_pins lowlevel_dac_intfc_0/resetn]
@@ -758,18 +770,18 @@ connect_bd_intf_net -intf_net [get_bd_intf_nets ps7_0_axi_periph_M00_AXI] [get_b
   connect_bd_net -net processing_system7_0_FCLK_RESET0_N [get_bd_pins processing_system7_0/FCLK_RESET0_N] [get_bd_pins rst_ps7_0_125M/ext_reset_in]
   connect_bd_net -net rst_ps7_0_125M_peripheral_aresetn [get_bd_pins ps7_0_axi_periph/ARESETN] [get_bd_pins ps7_0_axi_periph/S00_ARESETN] [get_bd_pins rst_ps7_0_125M/peripheral_aresetn] [get_bd_pins xpm_cdc_gen_0/src_rst]
   connect_bd_net -net rst_ps7_0_125M_peripheral_reset [get_bd_pins rst_ps7_0_125M/peripheral_reset]
-  connect_bd_net -net s00_axi_aclk_0_1 [get_bd_ports clk125] [get_bd_pins axi_iic_0/s_axi_aclk] [get_bd_pins full_radio_0/s00_axi_aclk] [get_bd_pins lowlevel_dac_intfc_0/clk125] [get_bd_pins ps7_0_axi_periph/M00_ACLK] [get_bd_pins ps7_0_axi_periph/M01_ACLK] [get_bd_pins system_ila_0/clk] [get_bd_pins xpm_cdc_gen_0/dest_clk]
-  connect_bd_net -net xpm_cdc_gen_0_dest_rst_out [get_bd_pins axi_iic_0/s_axi_aresetn] [get_bd_pins full_radio_0/s00_axi_aresetn] [get_bd_pins ps7_0_axi_periph/M00_ARESETN] [get_bd_pins ps7_0_axi_periph/M01_ARESETN] [get_bd_pins system_ila_0/resetn] [get_bd_pins xpm_cdc_gen_0/dest_rst_out]
+  connect_bd_net -net s00_axi_aclk_0_1 [get_bd_ports clk125] [get_bd_pins axi_iic_0/s_axi_aclk] [get_bd_pins axis_broadcaster_0/aclk] [get_bd_pins full_radio_0/s00_axi_aclk] [get_bd_pins lowlevel_dac_intfc_0/clk125] [get_bd_pins ps7_0_axi_periph/M00_ACLK] [get_bd_pins ps7_0_axi_periph/M01_ACLK] [get_bd_pins ps7_0_axi_periph/M02_ACLK] [get_bd_pins radio_fifo_0/s00_axi_aclk] [get_bd_pins system_ila_0/clk] [get_bd_pins xpm_cdc_gen_0/dest_clk]
+  connect_bd_net -net xpm_cdc_gen_0_dest_rst_out [get_bd_pins axi_iic_0/s_axi_aresetn] [get_bd_pins axis_broadcaster_0/aresetn] [get_bd_pins full_radio_0/s00_axi_aresetn] [get_bd_pins ps7_0_axi_periph/M00_ARESETN] [get_bd_pins ps7_0_axi_periph/M01_ARESETN] [get_bd_pins ps7_0_axi_periph/M02_ARESETN] [get_bd_pins radio_fifo_0/s00_axi_aresetn] [get_bd_pins system_ila_0/resetn] [get_bd_pins xpm_cdc_gen_0/dest_rst_out]
 
   # Create address segments
   assign_bd_address -offset 0x41600000 -range 0x00010000 -target_address_space [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs axi_iic_0/S_AXI/Reg] -force
   assign_bd_address -offset 0x43C00000 -range 0x00010000 -target_address_space [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs full_radio_0/S00_AXI/S00_AXI_reg] -force
+  assign_bd_address -offset 0x43C10000 -range 0x00010000 -target_address_space [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs radio_fifo_0/S00_AXI/S00_AXI_reg] -force
 
 
   # Restore current instance
   current_bd_instance $oldCurInst
 
-  validate_bd_design
   save_bd_design
 }
 # End of create_root_design()
@@ -781,4 +793,6 @@ connect_bd_intf_net -intf_net [get_bd_intf_nets ps7_0_axi_periph_M00_AXI] [get_b
 
 create_root_design ""
 
+
+common::send_gid_msg -ssname BD::TCL -id 2053 -severity "WARNING" "This Tcl script was generated from a block design that has not been validated. It is possible that design <$design_name> may result in errors during validation."
 
