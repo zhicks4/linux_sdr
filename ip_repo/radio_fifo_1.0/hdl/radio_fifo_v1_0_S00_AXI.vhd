@@ -123,6 +123,16 @@ architecture arch_imp of radio_fifo_v1_0_S00_AXI is
 	signal fifo_data : std_logic_vector(31 downto 0);
 	signal fifo_ready : std_logic;
 	signal fifo_valid : std_logic;
+	signal probe0 : std_logic;
+	signal probe1 : std_logic;
+	signal probe2 : std_logic;
+	signal probe3 : std_logic;
+	signal probe4 : std_logic_vector(31 downto 0);
+	signal probe5 : std_logic;
+	signal probe6 : std_logic;
+	signal probe7 : std_logic_vector(31 downto 0);
+	signal probe8 : std_logic_vector(31 downto 0);
+	signal probe9 : std_logic;
 	
 	------------------------------------------------------------
     ------------------------ Components ------------------------
@@ -141,6 +151,22 @@ architecture arch_imp of radio_fifo_v1_0_S00_AXI is
         );
     END COMPONENT;
 
+    COMPONENT ila_0
+        PORT (
+            clk : IN STD_LOGIC;
+            probe0 : IN STD_LOGIC_VECTOR(0 DOWNTO 0); 
+            probe1 : IN STD_LOGIC_VECTOR(0 DOWNTO 0); 
+            probe2 : IN STD_LOGIC_VECTOR(0 DOWNTO 0); 
+            probe3 : IN STD_LOGIC_VECTOR(0 DOWNTO 0); 
+            probe4 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+            probe5 : IN STD_LOGIC_VECTOR(0 DOWNTO 0); 
+            probe6 : IN STD_LOGIC_VECTOR(0 DOWNTO 0); 
+            probe7 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
+            probe8 : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
+            probe9 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+            probe10: IN STD_LOGIC_VECTOR(3 downto 0)
+        );
+    END COMPONENT;
 
 
 begin
@@ -388,6 +414,11 @@ begin
 	      when others =>
 	        reg_data_out  <= (others => '0');
 	    end case;
+	    if (axi_araddr = "0000" and slv_reg_rden = '1') then
+            fifo_ready <= '1';       
+        else
+            fifo_ready <= '0';
+        end if;
 	end process; 
 
 	-- Output register or memory read data
@@ -422,8 +453,33 @@ begin
             m_axis_tdata => fifo_data,
             axis_rd_data_count => fifo_count
         );
-    fifo_ready <= slv_reg_rden when (axi_araddr(ADDR_LSB + OPT_MEM_ADDR_BITS downto ADDR_LSB) = x"00")
-                  else '0'; 
+    fifo_ila : ila_0
+    PORT MAP (
+        clk => s_axi_aclk,
+        probe0(0) => probe0, 
+        probe1(0) => probe1, 
+        probe2(0) => probe2, 
+        probe3(0) => probe3, 
+        probe4 => probe4, 
+        probe5(0) => probe5, 
+        probe6(0) => probe6, 
+        probe7 => probe7, 
+        probe8 => probe8,
+        probe9(0) => probe9,
+        probe10 => axi_araddr
+    );
+    
+    probe0 <= s_axi_aresetn;
+    probe1 <= s_axi_aclk;
+	probe2 <= s_axis_tvalid;
+	probe3 <= axi_rvalid;
+	probe4 <= s_axis_tdata;
+	probe5 <= fifo_valid;
+	probe6 <= fifo_ready;
+	probe7 <= fifo_count;
+	probe8 <= fifo_data;
+	probe9 <= slv_reg_rden;
+	
 	-- User logic ends
 
 end arch_imp;
