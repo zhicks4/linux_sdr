@@ -151,24 +151,6 @@ architecture arch_imp of radio_fifo_v1_0_S00_AXI is
         );
     END COMPONENT;
 
-    COMPONENT ila_0
-        PORT (
-            clk : IN STD_LOGIC;
-            probe0 : IN STD_LOGIC_VECTOR(0 DOWNTO 0); 
-            probe1 : IN STD_LOGIC_VECTOR(0 DOWNTO 0); 
-            probe2 : IN STD_LOGIC_VECTOR(0 DOWNTO 0); 
-            probe3 : IN STD_LOGIC_VECTOR(0 DOWNTO 0); 
-            probe4 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
-            probe5 : IN STD_LOGIC_VECTOR(0 DOWNTO 0); 
-            probe6 : IN STD_LOGIC_VECTOR(0 DOWNTO 0); 
-            probe7 : IN STD_LOGIC_VECTOR(31 DOWNTO 0); 
-            probe8 : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
-            probe9 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-            probe10: IN STD_LOGIC_VECTOR(3 downto 0)
-        );
-    END COMPONENT;
-
-
 begin
 	-- I/O Connections assignments
 
@@ -453,33 +435,6 @@ begin
             m_axis_tdata => fifo_data,
             axis_rd_data_count => fifo_count
         );
-    fifo_ila : ila_0
-    PORT MAP (
-        clk => s_axi_aclk,
-        probe0(0) => probe0, 
-        probe1(0) => probe1, 
-        probe2(0) => probe2, 
-        probe3(0) => probe3, 
-        probe4 => probe4, 
-        probe5(0) => probe5, 
-        probe6(0) => probe6, 
-        probe7 => probe7, 
-        probe8 => probe8,
-        probe9(0) => probe9,
-        probe10 => axi_araddr
-    );
-    
-    probe0 <= s_axi_aresetn;
-    probe1 <= s_axi_aclk;
-	probe2 <= s_axis_tvalid;
-	probe3 <= axi_rvalid;
-	probe4 <= s_axis_tdata;
-	probe5 <= fifo_valid;
-	probe6 <= fifo_ready;
-	probe7 <= fifo_count;
-	probe8 <= fifo_data;
-	probe9 <= slv_reg_rden;
-	
 	-- User logic ends
 
 end arch_imp;
