@@ -70,6 +70,19 @@ def get_radio_reg(dev, offset):
     return val
 
 
+def toggle_mute():
+    '''
+    Toggles the mute bit in the radio control register
+    '''
+    global mute
+    mute ^= 1
+    set_radio_reg(mem_radio, ctrl_offset, mute)
+    if (mute):
+        print('    Muted')
+    else:
+        print('    Unmuted')
+
+
 def freq_to_inc(freq):
     '''
     Converts a desired frequency to a phase increment value for the DDS
@@ -85,17 +98,19 @@ def freq_to_inc(freq):
 
 
 def send_packet(sock, payload, udp_ip, udp_port):
+    '''
+    Transmits a UDP datagram of radio output samples to the provided UDP port
+
+    Parameters:
+        sock (socket): the socket object
+        payload (bytes): the data payload of radio samples
+        udp_ip (str): the destination IP address
+        udp_port (int): the destination port
+
+    Returns:
+        None
+    '''
     sock.sendto(payload, (udp_ip, udp_port))
-
-
-def toggle_mute():
-    global mute
-    mute ^= 1
-    set_radio_reg(mem_radio, ctrl_offset, mute)
-    if (mute):
-        print('    Muted')
-    else:
-        print('    Unmuted')
 
 
 def print_instructions():
@@ -113,6 +128,9 @@ def print_instructions():
 
 
 def print_freq_update(freq, phase_inc):
+    '''
+    Prints the ADC or tuner frequency change to the user
+    '''
     print(f'    Frequency: {freq}')
     print(f'    Phase Increment: {phase_inc}')
 
@@ -141,6 +159,7 @@ def main(udp_ip, udp_port, adc_freq, tuner_freq):
     print(f'Initially configured to transmit UDP packets to {ip}:{port}')
     print_instructions()
 
+    # Control loop
     while(1):
         command = input("Enter a command: ")
         print('')
