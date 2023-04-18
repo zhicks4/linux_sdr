@@ -15,180 +15,214 @@ import subprocess
 import mmap
 import struct
 import math
+import threading
 
 
-# Define memory-mapped peripheral addresses and offsets
-radio_periph_base_addr = 0x43c00000
-adc_offset = 0x00
-tuner_offset = 0x04
-ctrl_offset = 0x08
-timer_offset = 0x0c
-fifo_base_addr = 0x43c10000
-fifo_data_offset = 0x00
-fifo_count_offset = 0x04
+class linux_sdr:
+    
+    # Define memory-mapped peripheral addresses and offsets
+    radio_periph_base_addr = 0x43c00000
+    adc_offset = 0x00
+    tuner_offset = 0x04
+    ctrl_offset = 0x08
+    timer_offset = 0x0c
+    fifo_base_addr = 0x43c10000
+    fifo_data_offset = 0x00
+    fifo_count_offset = 0x04
 
-# Define constants
-SAMP_FREQ = 125000000
-PHASE_RESOLUTION_BITS = 27
+    # Define constants
+    SAMP_FREQ = 125000000
+    PHASE_RESOLUTION_BITS = 27
 
-# Open memory-mapped peripheral location
-file = os.open('/dev/mem', os.O_RDWR, os.O_SYNC)
-mem_radio = mmap.mmap(file, 4096, offset=radio_periph_base_addr)
-mem_fifo = mmap.mmap(file, 4096, offset=fifo_base_addr)
+    # Open memory-mapped peripheral location
+    file = os.open('/dev/mem', os.O_RDWR, os.O_SYNC)
+    radio_ctrl_base = mmap.mmap(file, 4096, offset=radio_periph_base_addr)
+    fifo_base = mmap.mmap(file, 4096, offset=fifo_base_addr)
 
-# Misc global variables
-mute = 0
+    # UDP socket
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-
-def set_radio_reg(dev, offset, val):
-    '''
-    Sets the value of the specified radio control register
-
-    Parameters:
-        dev (hex): the memory mapped device to write to, from {mem_radio, mem_fifo}
-        offset (hex): the desired register memory offset value, from {adc_offset, tuner_offset, ctrl_offset, timer_offset}
-        val (int): the value to write to the specified register
-    Returns:
-        None  
-    '''
-    dev.seek(offset)
-    dev.write(struct.pack('i', int(val)))
+    # Mute status
+    mute = 0
 
 
-def get_radio_reg(dev, offset):
-    '''
-    Returns the value of the specified 32-bit radio control register
+    def __init__(self, udp_ip="127.0.0.1", udp_port=25344, adc_freq=0, tuner_freq=0):
+        self.udp_ip = udp_ip
+        self.udp_port = udp_port
+        self.adc_freq = adc_freq
+        self.tuner_freq = tuner_freq
 
-    Parameters:
-        dev (hex): the memory mapped device to write to, from {mem_radio, mem_fifo}
-        offset (hex): the specified register memory offset value, from {adc_offset, tuner_offset, ctrl_offset, timer_offset}
+        self.set_ctrl_reg(self.adc_offset, self.freq_to_inc(self.adc_freq))
+        self.set_ctrl_reg(self.tuner_offset, self.freq_to_inc(self.tuner_freq))
+       
 
-    Returns:
-        val (int): the value from the specified register
-    '''
-    dev.seek(offset)
-    val = int.from_bytes(dev.read(4), 'little')
-    return val
-
-
-def toggle_mute():
-    '''
-    Toggles the mute bit in the radio control register
-    '''
-    global mute
-    mute ^= 1
-    set_radio_reg(mem_radio, ctrl_offset, mute)
-    if (mute):
-        print('    Muted')
-    else:
-        print('    Unmuted')
-
-
-def freq_to_inc(freq):
-    '''
-    Converts a desired frequency to a phase increment value for the DDS
+    def set_ctrl_reg(self, offset, val):
+        '''
+        Sets the value of the specified radio control register
 
         Parameters:
-            freq (int): the input frequency value to convert
+            offset (hex): the desired register memory offset value, from {adc_offset, tuner_offset, ctrl_offset}
+            val (int): the value to write to the specified register
+        Returns:
+            None  
+        '''
+        self.radio_ctrl_base.seek(offset)
+        self.radio_ctrl_base.write(struct.pack('i', int(val)))
+
+
+    def get_ctrl_reg(self, offset):
+        '''
+        Returns the value of the specified 32-bit radio control register
+
+        Parameters:
+            offset (hex): the specified register memory offset value, from {fifo_data_offset, fifo_count_offset}
 
         Returns:
-            phase_inc (int): the phase increment value
-    '''
-    phase_inc = math.floor((freq << PHASE_RESOLUTION_BITS) / SAMP_FREQ)
-    return phase_inc
-
-
-def create_packet():
-    '''
-    Creates a UDP datagram from the radio FIFO output samples
-
-    Parameters:
-        None
-
-    Returns:
-        payload_bytes (bytes): if the packet is valid, the UDP datagram payload, otherwise None
-    '''
-    if not hasattr(create_packet, "seq_num"):
-        create_packet.seq_num = 0
+            val (int): the value from the specified register
+        '''
+        self.fifo_base.seek(offset)
+        val = int.from_bytes(self.fifo_base.read(4), 'little')
+        return val
     
-    fifo_count = get_radio_reg(mem_fifo, fifo_count_offset)
-    samples = []
-    if (fifo_count > 256):
-        sample = get_radio_reg(mem_fifo, fifo_data_offset)
-        samples.append(sample)
-        payload_bytes = create_packet.seq_num.to_bytes(2, "little")
-        for samp in samples:
-            samp_I = samp & 0x0000FFFF
-            samp_Q = (samp & 0xFFFF0000) >> 16
-            payload_bytes += samp_I.to_bytes(2, "little")
-            payload_bytes += samp_Q.to_bytes(2, "little") 
-        create_packet.seq_num += 1   
-        return payload_bytes
-    else:
-        return None
+    def get_fifo_reg(self, offset):
+        '''
+        Returns the value of the specified 32-bit fifo register
+
+        Parameters:
+            offset (hex): the specified register memory offset value, from {adc_offset, tuner_offset, ctrl_offset, timer_offset}
+
+        Returns:
+            val (int): the value from the specified register
+        '''
+        self.radio_ctrl_base.seek(offset)
+        val = int.from_bytes(self.radio_ctrl_base.read(4), 'little')
+        return val
 
 
-def send_packet(sock, payload, udp_ip, udp_port):
-    '''
-    Transmits a UDP datagram of radio output samples to the provided UDP port
+    def set_freq_reg(self, offset, freq):
+        '''
+        Updates the value in the given radio control frequency register
 
-    Parameters:
-        sock (socket): the socket object
-        payload (bytes): the data payload of radio samples
-        udp_ip (str): the destination IP address
-        udp_port (int): the destination port
-
-    Returns:
-        None
-    '''
-    sock.sendto(payload, (udp_ip, udp_port))
-
-
-def print_instructions():
-    '''
-    Prints the instructions to the user
-    '''
-    print("\nEnter 'f' or 'frequency' to enter an ADC frequency")
-    print("Enter 't' or 'tune' to enter a tuning frequency")
-    print("Enter 'u'/'U' to increase ADC frequency by 100/1000 Hz")
-    print("Enter 'd'/'D' to decrease ADC frequency by 100/1000 Hz")
-    print("Enter 'i' or 'IP' to update the destination IP address")
-    print("Enter 'p' or 'port' to update the destination UDP port")
-    print("Enter 'm' or 'mute' to toggle the speaker output")
-    print("Enter 'h' or 'help' to repeat these instructions\n")
+        Parameters:
+            offset (hex): the specified register memory offset value, from {adc_offset, tuner_offset}
+            freq (int): the new frequency value
+        
+        Returns:
+            None
+            
+        '''
+        self.set_ctrl_reg(offset, self.freq_to_inc(freq))
+        if (offset == self.adc_offset):
+            self.adc_freq = freq
+        elif (offset == self.tuner_offset):
+            self.tuner_freq = freq
+        self.print_freq_update(freq)
 
 
-def print_freq_update(freq, phase_inc):
-    '''
-    Prints the ADC or tuner frequency change to the user
-    '''
-    print(f'    Frequency: {freq}')
-    print(f'    Phase Increment: {phase_inc}')
+    def toggle_mute(self):
+        '''
+        Toggles the mute bit in the radio control register
+        '''
+        self.mute ^= 1
+        self.set_ctrl_reg(self.ctrl_offset, self.mute)
+        if (self.mute):
+            print('    Muted')
+        else:
+            print('    Unmuted')
+
+
+    def freq_to_inc(self, freq):
+        '''
+        Converts a desired frequency to a phase increment value for the DDS
+
+            Parameters:
+                freq (int): the input frequency value to convert
+
+            Returns:
+                phase_inc (int): the phase increment value
+        '''
+        phase_inc = math.floor((freq << self.PHASE_RESOLUTION_BITS) / self.SAMP_FREQ)
+        return phase_inc
+
+
+    def create_packet(self):
+        '''
+        Creates a UDP datagram from the radio FIFO output samples
+
+        Parameters:
+            None
+
+        Returns:
+            payload_bytes (bytes): if the packet is valid, the UDP datagram payload, otherwise None
+        '''
+        if not hasattr(self.create_packet, "seq_num"):
+            self.create_packet.seq_num = 0
+        
+        fifo_count = self.get_fifo_reg(self.fifo_count_offset)
+        samples = []
+        if (fifo_count > 256):
+            sample = self.get_fifo_reg(self.fifo_data_offset)
+            samples.append(sample)
+            payload_bytes = self.create_packet.seq_num.to_bytes(2, "little")
+            for samp in samples:
+                samp_I = samp & 0x0000FFFF
+                samp_Q = (samp & 0xFFFF0000) >> 16
+                payload_bytes += samp_I.to_bytes(2, "little")
+                payload_bytes += samp_Q.to_bytes(2, "little") 
+            self.create_packet.seq_num += 1   
+            return payload_bytes
+        else:
+            return None
+
+
+    def send_packet(self, payload):
+        '''
+        Transmits a UDP datagram of radio output samples to the provided UDP port
+
+        Parameters:
+            sock (socket): the socket object
+            payload (bytes): the data payload of radio samples
+            udp_ip (str): the destination IP address
+            udp_port (int): the destination port
+
+        Returns:
+            None
+        '''
+        self.sock.sendto(payload, (self.udp_ip, self.udp_port))
+
+
+    def print_instructions(self):
+        '''
+        Prints the instructions to the user
+        '''
+        print("\nEnter 'f' or 'frequency' to enter an ADC frequency")
+        print("Enter 't' or 'tune' to enter a tuning frequency")
+        print("Enter 'u'/'U' to increase ADC frequency by 100/1000 Hz")
+        print("Enter 'd'/'D' to decrease ADC frequency by 100/1000 Hz")
+        print("Enter 'i' or 'IP' to update the destination IP address")
+        print("Enter 'p' or 'port' to update the destination UDP port")
+        print("Enter 'm' or 'mute' to toggle the speaker output")
+        print("Enter 'h' or 'help' to repeat these instructions\n")
+
+
+    def print_freq_update(self, freq):
+        '''
+        Prints the ADC or tuner frequency change to the user
+
+        Parameters:
+            freq (int): the new frequency
+        '''
+        print(f'    Frequency: {freq}')
+        print(f'    Phase Increment: {self.freq_to_inc(freq)}')
 
 
 def main(udp_ip, udp_port, adc_freq, tuner_freq):
-    
-    ip = udp_ip
-    port = udp_port
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    payload_seq_num = 0
-    adc_phase_inc = freq_to_inc(adc_freq)
-    tuner_phase_inc = freq_to_inc(tuner_freq)
-
     # TODO: add multithreading for reading FIFO and creating UDP packets
-    '''
-    fifo_count = get_radio_reg(fifo_count_offset)
-    if (fifo_count = 256):
-        payload = []
-        for i in range(0, 256):
-            next_fifo_word = get_radio_reg(fifo_data_offset)
-            payload.append(next_fifo_word)
-        send_packet(sock, payload, ip, port)
-    '''
+    sdr = linux_sdr(udp_ip=udp_ip, udp_port=udp_port, adc_freq=adc_freq, tuner_freq=tuner_freq)
 
     print('\nLinux SDR with Ethernet - Zach Hicks\n')
-    print(f'Initially configured to transmit UDP packets to {ip}:{port}')
-    print_instructions()
+    print(f'Initially configured to transmit UDP packets to {sdr.udp_ip}:{str(sdr.udp_port)}')
+    sdr.print_instructions()
 
     # Control loop
     while(1):
@@ -196,48 +230,36 @@ def main(udp_ip, udp_port, adc_freq, tuner_freq):
         print('')
         if (command == 'f' or command == 'frequency'):
             adc_freq = int(input('Enter an ADC frequency: '))
-            adc_phase_inc = freq_to_inc(adc_freq)
-            set_radio_reg(mem_radio, adc_offset, adc_phase_inc)
-            print_freq_update(adc_freq, adc_phase_inc)
+            sdr.set_freq_reg(sdr.adc_offset, adc_freq)
         elif (command == 't' or command == 'tune'):
             tuner_freq = int(input('Enter a tuner frequency: '))
-            tuner_phase_inc = freq_to_inc(tuner_freq)
-            set_radio_reg(mem_radio, tuner_offset, tuner_phase_inc)
-            print_freq_update(tuner_freq, tuner_phase_inc)
+            sdr.set_freq_reg(sdr.tuner_offset, tuner_freq)
         elif (command == 'u'):
-            adc_freq += 100
-            adc_phase_inc = freq_to_inc(adc_freq)
-            set_radio_reg(mem_radio, adc_offset, adc_phase_inc)
-            print_freq_update(adc_freq, adc_phase_inc)
+            adc_freq = sdr.adc_freq + 100
+            sdr.set_freq_reg(sdr.adc_offset, adc_freq)
         elif (command == 'U'):
-            adc_freq += 1000
-            adc_phase_inc = freq_to_inc(adc_freq)
-            set_radio_reg(mem_radio, adc_offset, adc_phase_inc)
-            print_freq_update(adc_freq, adc_phase_inc)
+            adc_freq = sdr.adc_freq + 1000
+            sdr.set_freq_reg(sdr.adc_offset, adc_freq)
         elif (command == 'd'):
-            if (adc_freq >= 100):
-                adc_freq -= 100
-                adc_phase_inc = freq_to_inc(adc_freq)
-                set_radio_reg(mem_radio, adc_offset, adc_phase_inc)
-                print_freq_update(adc_freq, adc_phase_inc)
+            if (sdr.adc_freq >= 100):
+                adc_freq = sdr.adc_freq - 100
+                sdr.set_freq_reg(sdr.adc_offset, adc_freq)
             else:
                 print('Frequency cannot be decreased any further!')
         elif (command == 'D'):
-            if (adc_freq >= 1000):
-                adc_freq -= 1000
-                adc_phase_inc = freq_to_inc(adc_freq)
-                set_radio_reg(mem_radio, adc_offset, adc_phase_inc)
-                print_freq_update(adc_freq, adc_phase_inc)
+            if (sdr.adc_freq >= 1000):
+                adc_freq = sdr.adc_freq - 1000
+                sdr.set_freq_reg(sdr.adc_offset, adc_freq)
             else:
                 print('Frequency cannot be decreased any further!')
         elif (command == 'm' or command == 'mute'):
-            toggle_mute()
+            sdr.toggle_mute()
         elif (command == 'i' or command == 'IP'):
-            ip = input('Enter a new destination IP address: ')
+            sdr.udp_ip = input('Enter a new destination IP address: ')
         elif (command == 'p' or command == 'port'):
-            port = input('Enter a new destination UDP port: ')
+            sdr.udp_port = int(input('Enter a new destination UDP port: '))
         elif (command == 'h' or command == 'help'):
-            print_instructions()
+            sdr.print_instructions()
         print('')
 
 
@@ -251,6 +273,7 @@ if __name__ == '__main__':
     parser.add_argument('-t', '--tuner_freq', nargs='?', help='Tuner frequency', default=0)
     args = parser.parse_args()
 
+    # Load FPGA images
     codec_config_cmd = 'fpgautil -b config_codec.bit.bin'
     radio_config_cmd = 'fpgautil -b design_1_wrapper.bit.bin'
     subprocess.run(codec_config_cmd, shell=True)
