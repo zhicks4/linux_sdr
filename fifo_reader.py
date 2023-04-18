@@ -10,6 +10,7 @@ import mmap
 import struct
 import math
 import time
+import socket
 
 # Define memory-mapped peripheral addresses and offsets
 radio_periph_base_addr = 0x43c00000
@@ -89,9 +90,7 @@ def freq_to_inc(freq):
     return phase_inc
 
 
-def main(num_samples):
-    
-    
+def main(ip, num_samples):
     adc_phase_inc = freq_to_inc(1001000)
     tuner_phase_inc = freq_to_inc(1000000)
 
@@ -100,16 +99,36 @@ def main(num_samples):
     
     print('\nLinux SDR with Ethernet Milestone 2 - Zach Hicks\n')
     print(f'Reading {num_samples} from the radio FIFO...')
+    if (ip != '0'):
+        udp_port = 25344
+        print(f'Transmitting UDP packets to {ip}:{udp_port}')
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    
     print('')
     start = time.time()
     
     samples_read = 0
+    samples = []
+    seq_num = 0
 
     while(samples_read <= num_samples):
         fifo_count = get_radio_reg(mem_fifo, fifo_count_offset)
         if (fifo_count > 0):
             sample = get_radio_reg(mem_fifo, fifo_data_offset)
             samples_read += 1
+
+            if (ip != '0'):
+                samples.append(sample)
+                if (len(samples) == 256):
+                    payload_bytes = seq_num.to_bytes(2, "little")
+                    for samp in samples:
+                        samp_I = samp & 0x0000FFFF
+                        samp_Q = (samp & 0xFFFF0000) >> 16
+                        payload_bytes += samp_I.to_bytes(2, "little")
+                        payload_bytes += samp_Q.to_bytes(2, "little")    
+                    sock.sendto(payload_bytes, (ip, udp_port))
+                    seq_num += 1
+                    samples = []
 
     end = time.time()
     print(f'Reading {num_samples} samples took {end-start} seconds')
@@ -118,6 +137,7 @@ def main(num_samples):
 if __name__ == '__main__':
     description = "Linux SDR Milestone 2 - Reads samples from the radio FIFO"
     parser = argparse.ArgumentParser(description=description)
+    parser.add_argument('-d', '--ip', nargs='?', help='Destination IP address', default='0')
     parser.add_argument('-n', '--num_samps', nargs='?', help='Number of samples', default='480000')
     args = parser.parse_args()
 
@@ -126,4 +146,4 @@ if __name__ == '__main__':
     subprocess.run(codec_config_cmd, shell=True)
     subprocess.run(radio_config_cmd, shell=True)
 
-    main(int(args.num_samps))
+    main(args.ip, int(args.num_samps))
