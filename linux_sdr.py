@@ -16,6 +16,7 @@ import mmap
 import struct
 import math
 
+
 # Define memory-mapped peripheral addresses and offsets
 radio_periph_base_addr = 0x43c00000
 adc_offset = 0x00
@@ -95,6 +96,36 @@ def freq_to_inc(freq):
     '''
     phase_inc = math.floor((freq << PHASE_RESOLUTION_BITS) / SAMP_FREQ)
     return phase_inc
+
+
+def create_packet():
+    '''
+    Creates a UDP datagram from the radio FIFO output samples
+
+    Parameters:
+        None
+
+    Returns:
+        payload_bytes (bytes): if the packet is valid, the UDP datagram payload, otherwise None
+    '''
+    if not hasattr(create_packet, "seq_num"):
+        create_packet.seq_num = 0
+    
+    fifo_count = get_radio_reg(mem_fifo, fifo_count_offset)
+    samples = []
+    if (fifo_count > 256):
+        sample = get_radio_reg(mem_fifo, fifo_data_offset)
+        samples.append(sample)
+        payload_bytes = create_packet.seq_num.to_bytes(2, "little")
+        for samp in samples:
+            samp_I = samp & 0x0000FFFF
+            samp_Q = (samp & 0xFFFF0000) >> 16
+            payload_bytes += samp_I.to_bytes(2, "little")
+            payload_bytes += samp_Q.to_bytes(2, "little") 
+        create_packet.seq_num += 1   
+        return payload_bytes
+    else:
+        return None
 
 
 def send_packet(sock, payload, udp_ip, udp_port):
