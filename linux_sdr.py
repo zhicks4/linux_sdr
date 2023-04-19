@@ -18,7 +18,7 @@ import math
 import threading
 
 
-class linux_sdr:
+class LinuxSDR:
     
     # Define memory-mapped peripheral addresses and offsets
     radio_periph_base_addr = 0x43c00000
@@ -69,24 +69,10 @@ class linux_sdr:
         self.radio_ctrl_base.seek(offset)
         self.radio_ctrl_base.write(struct.pack('i', int(val)))
 
-
+    
     def get_ctrl_reg(self, offset):
         '''
         Returns the value of the specified 32-bit radio control register
-
-        Parameters:
-            offset (hex): the specified register memory offset value, from {fifo_data_offset, fifo_count_offset}
-
-        Returns:
-            val (int): the value from the specified register
-        '''
-        self.fifo_base.seek(offset)
-        val = int.from_bytes(self.fifo_base.read(4), 'little')
-        return val
-    
-    def get_fifo_reg(self, offset):
-        '''
-        Returns the value of the specified 32-bit fifo register
 
         Parameters:
             offset (hex): the specified register memory offset value, from {adc_offset, tuner_offset, ctrl_offset, timer_offset}
@@ -98,6 +84,21 @@ class linux_sdr:
         val = int.from_bytes(self.radio_ctrl_base.read(4), 'little')
         return val
 
+
+    def get_fifo_reg(self, offset):
+        '''
+        Returns the value of the specified 32-bit fifo register
+
+        Parameters:
+            offset (hex): the specified register memory offset value, from {fifo_data_offset, fifo_count_offset}
+
+        Returns:
+            val (int): the value from the specified register
+        '''
+        self.fifo_base.seek(offset)
+        val = int.from_bytes(self.fifo_base.read(4), 'little')
+        return val
+    
 
     def set_freq_reg(self, offset, freq):
         '''
@@ -218,7 +219,7 @@ class linux_sdr:
 
 def main(udp_ip, udp_port, adc_freq, tuner_freq):
     # TODO: add multithreading for reading FIFO and creating UDP packets
-    sdr = linux_sdr(udp_ip=udp_ip, udp_port=udp_port, adc_freq=adc_freq, tuner_freq=tuner_freq)
+    sdr = LinuxSDR(udp_ip=udp_ip, udp_port=udp_port, adc_freq=adc_freq, tuner_freq=tuner_freq)
 
     print('\nLinux SDR with Ethernet - Zach Hicks\n')
     print(f'Initially configured to transmit UDP packets to {sdr.udp_ip}:{str(sdr.udp_port)}')
