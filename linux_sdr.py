@@ -42,6 +42,7 @@ class LinuxSDR(Thread):
     # UDP socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     seq_num = 0
+    udp_enable = 1
 
     # Mute status
     mute = 0
@@ -136,6 +137,17 @@ class LinuxSDR(Thread):
             print('    Unmuted')
 
 
+    def toggle_udp(self):
+        '''
+        Toggles the UDP enable
+        '''
+        self.udp_enable ^= 1
+        if (self.udp_enable):
+            print('    UDP streaming enabled')
+        else:
+            print('    UDP streaming disabled')
+
+
     def freq_to_inc(self, freq):
         '''
         Converts a desired frequency to a phase increment value for the DDS
@@ -201,12 +213,11 @@ class LinuxSDR(Thread):
         Overrides Thread run() function to create and transmit a UDP packet whenever enough data is available
         '''
         while(1):
-            if (not self.stop_thread):
-                payload = self.create_packet()
-                if payload is not None:
-                    self.send_packet(payload)
-            else:
+            if (self.stop_thread):
                 break
+            payload = self.create_packet()
+            if payload is not None and self.udp_enable:
+                self.send_packet(payload)
 
 
     def print_instructions(self):
@@ -217,6 +228,7 @@ class LinuxSDR(Thread):
         print("Enter 't' or 'tune' to enter a tuning frequency")
         print("Enter 'u'/'U' to increase ADC frequency by 100/1000 Hz")
         print("Enter 'd'/'D' to decrease ADC frequency by 100/1000 Hz")
+        print("Enter 's' or 'stream' to toggle the UDP packet streaming")
         print("Enter 'i' or 'IP' to update the destination IP address")
         print("Enter 'p' or 'port' to update the destination UDP port")
         print("Enter 'm' or 'mute' to toggle the speaker output")
@@ -274,6 +286,8 @@ def main(udp_ip, udp_port, adc_freq, tuner_freq):
                 print('Frequency cannot be decreased any further!')
         elif (command == 'm' or command == 'mute'):
             sdr.toggle_mute()
+        elif (command == 's' or command == 'stream'):
+            sdr.toggle_udp()
         elif (command == 'i' or command == 'IP'):
             sdr.udp_ip = input('Enter a new destination IP address: ')
         elif (command == 'p' or command == 'port'):
