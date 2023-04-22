@@ -20,7 +20,7 @@ Documentation for the program can also be displayed by the command `python3 linu
 
 Once the program is running, the commands to interact with the radio will be displayed in the terminal:
 
-```python
+```
 Enter 'f' or 'frequency' to enter an ADC frequency
 Enter 't' or 'tune' to enter a tuning frequency   
 Enter 'u'/'U' to increase ADC frequency by 100/1000 Hz  
