@@ -98,7 +98,7 @@ def main(ip, num_samples):
     set_radio_reg(mem_radio, tuner_offset, tuner_phase_inc)
     
     print('\nLinux SDR with Ethernet Milestone 2 - Zach Hicks\n')
-    print(f'Reading {num_samples} from the radio FIFO...')
+    print(f'Reading {num_samples} samples from the radio FIFO...')
     if (ip != '0'):
         udp_port = 25344
         print(f'Transmitting UDP packets to {ip}:{udp_port}')
