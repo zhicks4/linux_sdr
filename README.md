@@ -1,20 +1,34 @@
-# radio_periph_lab
+# Linux SDR
 
-Note : if you are building in windows and vivado is not installed in c:\Xilinx\Vivado\2022.1, you will have to change one thing
-I included the settings64.bat file in the make_project.bat just to save a step.  Change that to your Install directory
+## EN 525.742 Lab Assignment: Linux SDR with Ethernet
 
-run make_project.bat (windows) or make_project.sh (linux) to build the project all the way through SD card creation.  You can of course
-edit in the GUI and debug in Vitis GUI afterwards as well.  The Vivado project is in "vivado" and the vitis workspace will be in "vitis"
+1) Run `make_project.bat` (windows) or `make_project.sh` (linux) to create the vivado project and generate a bitfile
 
-Only downside of this (haven't fixed it yet) the C code for the processor is copied into the Vitis workspace, not linked from the original
-version controlled SRC directory.  So, if you change it, you have to copy it back there.  There is a solution to this of course, but haven't 
-done it yet
+2) Run `make_bitbin.bat` to convert `design_1_wrapper.bit` bitfile to `.bit.bin` format
 
-The base distributed project for the radio peripheral laboratory
+3) Copy the `config_codec.bit.bin`, `design_1_wrapper.bit.bin`, and `linux_sdr.py` files into the same directory on the Zybo
 
-A couple of other notes to smooth things along :
+4) On the Zybo, run `python3 linux_sdr.py` - note that the python script will handle calling `fpgautil` to load the two FPGA images
 
-- Note that the Makefile that is created for you with the Create/Import peripheral wizard doesn't work when you go to build your software Vitis if you are using Windows.  Before packaging your peripheral, make sure to copy the Makefile from the doug_custom peripheral in this repository in place of the Makefile that the tool created as part of your software driver
-- I'm not convinced that right clicking on the "Update Hardware Platform" works when you've changed the underlying hardware XSA file.  The safest thing to do here (this is where the script really helps) is to just delete the entire Vitis directory and regenerate it.  To regenerate a Vitis directory (workspace with all the software), you can certainly do it manually as in all the other labs; however I just run the last line of "make_project.bat" from the command prompt
-- Make sure to use a standard command prompt, and not the windows powershell.
-- If you are experiencing long build times (i.e. waiting for an excessive amount of time for impl_1 to complete) this may be that you don't have enough memory to handle the level of parallelism that I asked for in the script.  Edit "impl.tcl" to change the line from "-jobs 7" to "-jobs 3" if you don't have 16GB of memory.  Your computer probably doesn't have enough memory to synthesize 7 things in parallel, and is constantly swapping to disk
+Usage for `linux_sdr.py` is as follows:
+
+```python
+python3 linux_sdr.py -d [DESTINATION_IP] -p [DESTINATION_UDP_PORT] -f [ADC_FREQUENCY] -t [TUNER_FREQUENCY]
+```
+
+Documentation for the program can also be displayed by the command `python3 linux_sdr.py -h`
+
+Once the program is running, the commands to interact with the radio will be displayed in the terminal:
+
+```
+Enter 'f' or 'frequency' to enter an ADC frequency
+Enter 't' or 'tune' to enter a tuning frequency   
+Enter 'u'/'U' to increase ADC frequency by 100/1000 Hz  
+Enter 'd'/'D' to decrease ADC frequency by 100/1000 Hz  
+Enter 's' or 'stream' to toggle the UDP packet streaming
+Enter 'i' or 'IP' to update the destination IP address  
+Enter 'p' or 'port' to update the destination UDP port
+Enter 'm' or 'mute' to toggle the speaker output      
+Enter 'h' or 'help' to repeat these instructions      
+Enter 'e' or 'exit' to terminate the program
+```

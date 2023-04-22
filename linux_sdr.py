@@ -251,8 +251,9 @@ def main(udp_ip, udp_port, adc_freq, tuner_freq):
     # TODO: add multithreading for reading FIFO and creating UDP packets
     sdr = LinuxSDR(udp_ip=udp_ip, udp_port=udp_port, adc_freq=adc_freq, tuner_freq=tuner_freq)
     sdr.start()
-
-    print('\nLinux SDR with Ethernet - Zach Hicks\n')
+    print('\n------------------------------------')
+    print('Linux SDR with Ethernet - Zach Hicks')
+    print('------------------------------------\n')
     print(f'Initially configured to transmit UDP packets to {sdr.udp_ip}:{str(sdr.udp_port)}')
     sdr.print_instructions()
 
@@ -307,18 +308,24 @@ def main(udp_ip, udp_port, adc_freq, tuner_freq):
 
 
 if __name__ == '__main__':
-    description = "Linux SDR with Ethernet"
+    description = "Linux SDR with Ethernet - Loads the FPGA images and starts an interactive session with the user to control the radio and transmit the baseband signal samples over a UDP connection"
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('-d', '--dest_ip_addr', nargs='?', help='Destination IP address', default='127.0.0.1')
     parser.add_argument('-p', '--port', nargs='?', help='Destination UDP port', default=25344)
-    parser.add_argument('-f', '--freq', nargs='?', help='Simulated ADC frequency', default=0)
-    parser.add_argument('-t', '--tuner_freq', nargs='?', help='Tuner frequency', default=0)
+    parser.add_argument('-f', '--freq', nargs='?', help='Simulated ADC frequency (Hz)', default=0)
+    parser.add_argument('-t', '--tuner_freq', nargs='?', help='Tuner frequency (Hz)', default=0)
     args = parser.parse_args()
 
     # Load FPGA images
     codec_config_cmd = 'fpgautil -b config_codec.bit.bin'
     radio_config_cmd = 'fpgautil -b design_1_wrapper.bit.bin'
+    print('')
+    print("Loading codec_config.bit.bin ...")
+    print('')
     subprocess.run(codec_config_cmd, shell=True)
+    print('')
+    print("Loading design_1_wrapper.bit.bin ...")
+    print('')
     subprocess.run(radio_config_cmd, shell=True)
 
     main(args.dest_ip_addr, int(args.port), int(args.freq), int(args.tuner_freq))
