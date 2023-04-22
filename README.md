@@ -20,7 +20,7 @@ Documentation for the program can also be displayed by the command `python3 linu
 
 Once the program is running, the commands to interact with the radio will be displayed in the terminal:
 
-```
+```python
 Enter 'f' or 'frequency' to enter an ADC frequency
 Enter 't' or 'tune' to enter a tuning frequency   
 Enter 'u'/'U' to increase ADC frequency by 100/1000 Hz  
@@ -32,3 +32,5 @@ Enter 'm' or 'mute' to toggle the speaker output
 Enter 'h' or 'help' to repeat these instructions      
 Enter 'e' or 'exit' to terminate the program
 ```
+
+The baseband data from the UDP packets can be plotted using the `collect_data_comples.m` MATLAB script by configuring the radio to stream UDP packets to your host computer's IP address and changing the UDP port to match the radio configuration - note that this MATLAB script was modified to reverse the order of the interleaved I and Q samples from the provided MATLAB script
