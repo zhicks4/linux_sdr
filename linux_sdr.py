@@ -63,6 +63,7 @@ class LinuxSDR():
         Parameters:
             offset (hex): the desired register memory offset value, from {adc_offset, tuner_offset, ctrl_offset}
             val (int): the value to write to the specified register
+            
         Returns:
             None  
         '''
@@ -95,7 +96,6 @@ class LinuxSDR():
         
         Returns:
             None
-            
         '''
         self.set_ctrl_reg(offset, self.freq_to_inc(freq))
         if (offset == self.adc_offset):
@@ -154,11 +154,11 @@ class LinuxSDR():
         '''
         Converts a desired frequency to a phase increment value for the DDS
 
-            Parameters:
-                freq (int): the input frequency value to convert
+        Parameters:
+            freq (int): the input frequency value to convert
 
-            Returns:
-                phase_inc (int): the phase increment value
+        Returns:
+            phase_inc (int): the phase increment value
         '''
         phase_inc = math.floor((freq << self.PHASE_RESOLUTION_BITS) / self.SAMP_FREQ)
         return phase_inc
@@ -186,6 +186,9 @@ class LinuxSDR():
 
         Parameters:
             freq (int): the new frequency
+
+        Returns:
+            None
         '''
         print(f'    Frequency: {freq}')
         print(f'    Phase Increment: {self.freq_to_inc(freq)}')
