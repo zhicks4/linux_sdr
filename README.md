@@ -6,9 +6,9 @@
 
 2) Run `make_bitbin.bat` to convert `design_1_wrapper.bit` bitfile to `.bit.bin` format
 
-3) Copy the `config_codec.bit.bin`, `design_1_wrapper.bit.bin`, and `linux_sdr.py` files into the same directory on the Zybo
+3) Copy the `config_codec.bit.bin`, `design_1_wrapper.bit.bin`, `linux_sdr.py`, and `fifo_reader.c` files into the same directory on the Zybo
 
-4) On the Zybo, run `python3 linux_sdr.py` - note that the python script will handle calling `fpgautil` to load the two FPGA images
+4) On the Zybo, run `python3 linux_sdr.py` - note that the python script will handle calling `gcc` to build the C executable and `fpgautil` to load the two FPGA images
 
 Usage for `linux_sdr.py` is as follows:
 
