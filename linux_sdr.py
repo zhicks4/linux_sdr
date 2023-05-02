@@ -63,7 +63,7 @@ class LinuxSDR():
         Parameters:
             offset (hex): the desired register memory offset value, from {adc_offset, tuner_offset, ctrl_offset}
             val (int): the value to write to the specified register
-            
+
         Returns:
             None  
         '''
@@ -264,6 +264,12 @@ if __name__ == '__main__':
     parser.add_argument('-f', '--freq', nargs='?', help='Simulated ADC frequency (Hz)', default=0)
     parser.add_argument('-t', '--tuner_freq', nargs='?', help='Tuner frequency (Hz)', default=0)
     args = parser.parse_args()
+
+    # Build C application
+    c_build_cmd = 'gcc fifo_reader.c -o fifo_reader'
+    print('')
+    print("Building fifo_reader.c ...")
+    subprocess.run(c_build_cmd, shell=True)
 
     # Load FPGA images
     codec_config_cmd = 'fpgautil -b config_codec.bit.bin'
