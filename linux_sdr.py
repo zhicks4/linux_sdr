@@ -192,34 +192,6 @@ class LinuxSDR(Thread):
         else:
             return None
 
-    # def create_packet(self):
-    #     '''
-    #     Creates a UDP datagram from the radio FIFO output samples
-
-    #     Parameters:
-    #         None
-
-    #     Returns:
-    #         payload_bytes (bytes): if the packet is valid, the UDP datagram payload, otherwise None
-    #     '''
-    #     fifo_count = self.get_fifo_reg(self.fifo_count_offset)
-    #     if (fifo_count > 0):
-    #         samp = self.get_fifo_reg(self.fifo_data_offset)
-    #         samp_I = samp & 0x0000FFFF
-    #         samp_Q = (samp & 0xFFFF0000) >> 16
-    #         self.payload += samp_I.to_bytes(2, "little")
-    #         self.payload += samp_Q.to_bytes(2, "little") 
-    #         if (len(self.payload) == 1024):
-    #             packet = self.seq_num.to_bytes(2, "little") + self.payload
-    #             self.seq_num += 1
-    #             if (self.seq_num >= 32767):
-    #                 self.seq_num = 0
-    #             self.payload = b''
-    #             return packet
-    #         else:
-    #             return None
-
-
     def send_packet(self, payload):
         '''
         Transmits a UDP datagram of radio output samples to the provided UDP port
