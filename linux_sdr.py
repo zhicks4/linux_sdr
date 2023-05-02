@@ -8,17 +8,15 @@
 # Bytes 0-1: 16-bit unsigned counter, increments by one in each transmitted UDP frame
 # Bytes 2-1025: 512 Interleaved 16-bit signed IQ, little endian, 48 kHz sample rate
 
-import socket
 import argparse
 import os
 import subprocess
 import mmap
 import struct
 import math
-from threading import Thread
 
 
-class LinuxSDR(Thread):
+class LinuxSDR():
     
     # Define memory-mapped peripheral addresses and offsets
     radio_periph_base_addr = 0x43c00000
@@ -37,14 +35,10 @@ class LinuxSDR(Thread):
     # Open memory-mapped peripheral location
     file = os.open('/dev/mem', os.O_RDWR, os.O_SYNC)
     radio_ctrl_base = mmap.mmap(file, 4096, offset=radio_periph_base_addr)
-    fifo_base = mmap.mmap(file, 4096, offset=fifo_base_addr)
 
-    # UDP socket
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    seq_num = 0
+    # UDP
     udp_enable = 1
-    payload = b''
-
+    
     # Mute status
     mute = 0
 
@@ -52,9 +46,9 @@ class LinuxSDR(Thread):
     stop_thread = 0
 
     def __init__(self, udp_ip="127.0.0.1", udp_port=25344, adc_freq=0, tuner_freq=0):
-        super(LinuxSDR, self).__init__()
         self.udp_ip = udp_ip
         self.udp_port = udp_port
+        self.udp_sender = subprocess.Popen(['./fifo_reader', udp_ip, str(udp_port)])
         self.adc_freq = adc_freq
         self.tuner_freq = tuner_freq
 
@@ -88,21 +82,6 @@ class LinuxSDR(Thread):
         '''
         self.radio_ctrl_base.seek(offset)
         val = int.from_bytes(self.radio_ctrl_base.read(4), 'little')
-        return val
-
-
-    def get_fifo_reg(self, offset):
-        '''
-        Returns the value of the specified 32-bit fifo register
-
-        Parameters:
-            offset (hex): the specified register memory offset value, from {fifo_data_offset, fifo_count_offset}
-
-        Returns:
-            val (int): the value from the specified register
-        '''
-        self.fifo_base.seek(offset)
-        val = int.from_bytes(self.fifo_base.read(4), 'little')
         return val
     
 
@@ -145,9 +124,31 @@ class LinuxSDR(Thread):
         self.udp_enable ^= 1
         if (self.udp_enable):
             print('    UDP streaming enabled')
+            self.send_packets(self.udp_ip, self.udp_port)
         else:
             print('    UDP streaming disabled')
+            self.udp_sender.kill()
 
+
+    def send_packets(self, udp_ip, udp_port):
+        '''
+        Runs the C program to read from the radio FIFO as a subprocess
+
+        Parameters:
+            udp_ip (str): the destination UDP IP address
+            udp_port (int): the destination UDP port
+            
+        Returns:
+            None
+        '''
+        self.udp_ip = udp_ip
+        self.udp_port = udp_port
+        try:
+            self.udp_sender.kill()
+        except Exception:
+            pass
+        self.udp_sender = subprocess.Popen(['./fifo_reader', self.udp_ip, str(self.udp_port)])
+        
 
     def freq_to_inc(self, freq):
         '''
@@ -161,63 +162,6 @@ class LinuxSDR(Thread):
         '''
         phase_inc = math.floor((freq << self.PHASE_RESOLUTION_BITS) / self.SAMP_FREQ)
         return phase_inc
-
-
-    def create_packet(self):
-        '''
-        Creates a UDP datagram from the radio FIFO output samples
-
-        Parameters:
-            None
-
-        Returns:
-            payload_bytes (bytes): if the packet is valid, the UDP datagram payload, otherwise None
-        '''
-        fifo_count = self.get_fifo_reg(self.fifo_count_offset)
-        samples = []
-        if (fifo_count > 256):
-            for i in range(0, 256):
-                sample = self.get_fifo_reg(self.fifo_data_offset)
-                samples.append(sample)
-            payload_bytes = self.seq_num.to_bytes(2, "little")
-            for samp in samples:
-                samp_I = samp & 0x0000FFFF
-                samp_Q = (samp & 0xFFFF0000) >> 16
-                payload_bytes += samp_I.to_bytes(2, "little")
-                payload_bytes += samp_Q.to_bytes(2, "little") 
-            self.seq_num += 1
-            if (self.seq_num >= 32767):
-                self.seq_num = 0
-            return payload_bytes
-        else:
-            return None
-
-    def send_packet(self, payload):
-        '''
-        Transmits a UDP datagram of radio output samples to the provided UDP port
-
-        Parameters:
-            sock (socket): the socket object
-            payload (bytes): the data payload of radio samples
-            udp_ip (str): the destination IP address
-            udp_port (int): the destination port
-
-        Returns:
-            None
-        '''
-        self.sock.sendto(payload, (self.udp_ip, self.udp_port))
-
-
-    def run(self):
-        '''
-        Overrides Thread run() function to create and transmit a UDP packet whenever enough data is available
-        '''
-        while(1):
-            if (self.stop_thread):
-                break
-            payload = self.create_packet()
-            if payload is not None and self.udp_enable:
-                self.send_packet(payload)
 
 
     def print_instructions(self):
@@ -248,14 +192,13 @@ class LinuxSDR(Thread):
 
 
 def main(udp_ip, udp_port, adc_freq, tuner_freq):
+    # Create SDR object
     sdr = LinuxSDR(udp_ip=udp_ip, udp_port=udp_port, adc_freq=adc_freq, tuner_freq=tuner_freq)
-    # sdr.start()
+    
     print('\n------------------------------------')
     print('Linux SDR with Ethernet - Zach Hicks')
     print('------------------------------------\n')
     print(f'Initially configured to transmit UDP packets to {sdr.udp_ip}:{str(sdr.udp_port)}')
-    fifo_log = open("log.txt", 'w')
-    udp_sender = subprocess.Popen(['./fifo_reader', sdr.udp_ip, str(sdr.udp_port)], stdout=fifo_log)
     sdr.print_instructions()
 
     # Control loop
@@ -292,15 +235,16 @@ def main(udp_ip, udp_port, adc_freq, tuner_freq):
             sdr.toggle_udp()
         elif (command == 'i' or command == 'IP'):
             sdr.udp_ip = input('Enter a new destination IP address: ')
+            sdr.send_packets(sdr.udp_ip, sdr.udp_port)
         elif (command == 'p' or command == 'port'):
             sdr.udp_port = int(input('Enter a new destination UDP port: '))
+            sdr.send_packets(sdr.udp_ip, sdr.udp_port)
         elif (command == 'h' or command == 'help'):
             sdr.print_instructions()
         elif (command == 'e' or command == 'exit'):
             sdr.set_ctrl_reg(sdr.adc_offset, 0)
             sdr.set_ctrl_reg(sdr.tuner_offset, 0)
-            sdr.stop_thread = 1
-            udp_sender.kill()
+            sdr.udp_sender.kill()
             print('Terminated UDP sender...')
             print('Exiting...')
             print('')
