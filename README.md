@@ -2,6 +2,8 @@
 
 ## EN 525.742 Lab Assignment: Linux SDR with Ethernet
 
+Begin with steps 1 and 2 to generate a new FPGA .bit file, otherwise skip to step 3 to use the prebuilt version in this repository
+
 1) Run `make_project.bat` (windows) or `make_project.sh` (linux) to create the vivado project and generate a bitfile
 
 2) Run `make_bitbin.bat` to convert `design_1_wrapper.bit` bitfile to `.bit.bin` format
